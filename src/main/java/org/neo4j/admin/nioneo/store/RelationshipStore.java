@@ -159,6 +159,27 @@ public class RelationshipStore extends AbstractStore implements Store
         }
     }
 
+    public void forceUpdateRecord( RelationshipRecord record )
+    {
+        PersistenceWindow window = acquireWindow( record.getId(),
+            OperationType.WRITE );
+        try
+        {
+            int id = record.getId();
+            Buffer buffer = window.getOffsettedBuffer( id );
+            byte inUse = record.inUse() ? Record.IN_USE.byteValue() : Record.NOT_IN_USE.byteValue();
+            buffer.put( inUse ).putInt( record.getFirstNode() ).putInt(
+                record.getSecondNode() ).putInt( record.getType() ).putInt(
+                record.getFirstPrevRel() ).putInt( record.getFirstNextRel() )
+                .putInt( record.getSecondPrevRel() ).putInt(
+                    record.getSecondNextRel() ).putInt( record.getNextProp() );
+        }
+        finally
+        {
+            releaseWindow( window );
+        }
+    }
+    
     public void updateRecord( RelationshipRecord record )
     {
         PersistenceWindow window = acquireWindow( record.getId(),

@@ -9,7 +9,7 @@ import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
 import org.neo4j.shell.ShellException;
 
-public class LsNode extends NioneoApp
+public class FindPropOwner extends NioneoApp
 {
 
     public String execute( AppCommandParser parser, Session session, Output out )
@@ -18,10 +18,24 @@ public class LsNode extends NioneoApp
         String arg = parser.arguments().get( 0 );
         int id = Integer.parseInt( arg );
         NodeStore nodeStore = getServer().getNodeStore();
-        NodeRecord record = nodeStore.forceGetRecord( id );
+        int maxNodeId = (int) nodeStore.getHighId();
+        String hit = "Not found";
+        StringBuffer nodeHits = new StringBuffer();
+        for ( int i = 0; i < maxNodeId; i++ )
+        {
+            NodeRecord record = nodeStore.forceGetRecord( i );
+            if ( record.getNextProp() == id )
+            {
+                nodeHits.append( "node record # " + i + " " );
+            }
+        }
+        if ( nodeHits.length() > 0 )
+        {
+            hit = nodeHits.toString();
+        }
         try
         {
-            out.println( Util.getRecordString( record ) );
+            out.println( hit );
         }
         catch ( RemoteException e )
         {

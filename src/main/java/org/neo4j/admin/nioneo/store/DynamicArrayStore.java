@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Dynamic store that stores strings.
  */
-class DynamicArrayStore extends AbstractDynamicStore
+public class DynamicArrayStore extends AbstractDynamicStore
 {
     // store version, each store ends with this string (byte encoded)
     private static final String VERSION = "ArrayPropertyStore v0.9.5";

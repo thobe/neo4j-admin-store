@@ -188,6 +188,26 @@ public class PropertyStore extends AbstractStore implements Store
         }
     }
 
+    public void forceUpdateRecord( PropertyRecord record )
+    {
+        PersistenceWindow window = acquireWindow( record.getId(),
+            OperationType.WRITE );
+        try
+        {
+            int id = record.getId();
+            Buffer buffer = window.getOffsettedBuffer( id );
+            buffer.put( record.inUse() ? 
+                Record.IN_USE.byteValue() : Record.NOT_IN_USE.byteValue() ).putInt(
+                record.getType().intValue() ).putInt( record.getKeyIndexId() )
+                .putLong( record.getPropBlock() ).putInt( record.getPrevProp() )
+                .putInt( record.getNextProp() );
+        }
+        finally
+        {
+            releaseWindow( window );
+        }
+    }
+    
     public void updateRecord( PropertyRecord record )
     {
         PersistenceWindow window = acquireWindow( record.getId(),
@@ -706,5 +726,10 @@ public class PropertyStore extends AbstractStore implements Store
     public DynamicStringStore getStringStore()
     {
         return stringPropertyStore;
+    }
+    
+    public DynamicArrayStore getArrayStore()
+    {
+        return arrayPropertyStore;
     }
 }

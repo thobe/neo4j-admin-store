@@ -4,10 +4,12 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.neo4j.admin.nioneo.store.DynamicArrayStore;
 import org.neo4j.admin.nioneo.store.DynamicStringStore;
 import org.neo4j.admin.nioneo.store.NodeStore;
 import org.neo4j.admin.nioneo.store.PropertyStore;
 import org.neo4j.admin.nioneo.store.RelationshipStore;
+import org.neo4j.admin.nioneo.store.AbstractRecord;
 import org.neo4j.shell.SimpleAppServer;
 
 public class NioneoServer extends SimpleAppServer
@@ -16,6 +18,9 @@ public class NioneoServer extends SimpleAppServer
     private final RelationshipStore relStore;
     private final PropertyStore propStore;
     private final DynamicStringStore stringStore;
+    private final DynamicArrayStore arrayStore;
+    
+    private AbstractRecord currentRecord;
 
     public NioneoServer( String path ) throws RemoteException
     {
@@ -28,6 +33,7 @@ public class NioneoServer extends SimpleAppServer
         propStore = new PropertyStore( path + "/neostore.propertystore.db",
                 getDefaultParams() );
         stringStore = propStore.getStringStore();
+        arrayStore = propStore.getArrayStore();
         nodeStore.makeStoreOk();
         relStore.makeStoreOk();
         propStore.makeStoreOk();
@@ -72,11 +78,26 @@ public class NioneoServer extends SimpleAppServer
         return stringStore;
     }
 
+    public DynamicArrayStore getArrayStore()
+    {
+        return arrayStore;
+    }
+    
     public void shutdown()
     {
         super.shutdown();
         nodeStore.close();
         relStore.close();
         propStore.close();
+    }
+    
+    public void setRecord( AbstractRecord record )
+    {
+        this.currentRecord = record;
+    }
+    
+    public AbstractRecord getCurrentRecord()
+    {
+        return this.currentRecord;
     }
 }

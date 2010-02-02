@@ -19,18 +19,9 @@ public class LsProp extends NioneoApp
         int id = Integer.parseInt( arg );
         PropertyStore propStore = getServer().getPropStore();
         PropertyRecord record = propStore.forceGetRecord( id );
-        StringBuffer buf = new StringBuffer( "prop record #" );
-        buf.append( record.getId() ).append( " [" );
-        buf.append( record.inUse() );
-        buf.append( "|type " ).append( record.getType() );
-        buf.append( "|key " ).append( record.getKeyIndexId() );
-        buf.append( "|value " ).append( record.getPropBlock() );
-        buf.append( "|pP " ).append( record.getPrevProp() );
-        buf.append( "|nP " ).append( record.getNextProp() );
-        buf.append( "]" );
         try
         {
-            out.println( buf );
+            out.println( Util.getRecordString( record ) );
         }
         catch ( RemoteException e )
         {

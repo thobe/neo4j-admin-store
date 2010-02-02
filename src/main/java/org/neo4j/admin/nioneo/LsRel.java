@@ -19,21 +19,9 @@ public class LsRel extends NioneoApp
         int id = Integer.parseInt( arg );
         RelationshipStore relStore = getServer().getRelStore();
         RelationshipRecord record = relStore.forceGetRecord( id );
-        StringBuffer buf = new StringBuffer( "rel record #" );
-        buf.append( record.getId() ).append( " [" );
-        buf.append( record.inUse() );
-        buf.append( "|fN " ).append( record.getFirstNode() );
-        buf.append( "|sN " ).append( record.getSecondNode() );
-        buf.append( "|t " ).append( record.getType() );
-        buf.append( "|fpN " ).append( record.getFirstPrevRel() );
-        buf.append( "|fnN " ).append( record.getFirstNextRel() );
-        buf.append( "|spN " ).append( record.getSecondPrevRel() );
-        buf.append( "|snN " ).append( record.getSecondNextRel() );
-        buf.append( "|nP " ).append( record.getNextProp() );
-        buf.append( "]" );
         try
         {
-            out.println( buf );
+            out.println( Util.getRecordString( record ) );
         }
         catch ( RemoteException e )
         {

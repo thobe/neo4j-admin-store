@@ -274,6 +274,35 @@ public abstract class AbstractDynamicStore extends CommonAbstractStore
         }
     }
 
+    public void forceUpdate( DynamicRecord record )
+    {
+        int blockId = record.getId();
+        PersistenceWindow window = acquireWindow( blockId, OperationType.WRITE );
+        try
+        {
+            Buffer buffer = window.getOffsettedBuffer( blockId );
+            buffer.put( record.inUse() ? 
+                Record.IN_USE.byteValue() : Record.NOT_IN_USE.byteValue() ).putInt(
+                record.getPrevBlock() ).putInt( record.getLength() )
+                .putInt( record.getNextBlock() );
+            if ( !record.isLight() )
+            {
+                if ( !record.isCharData() )
+                {
+                    buffer.put( record.getData() );
+                }
+                else
+                {
+                    buffer.put( record.getDataAsChar() );
+                }
+            }
+        }
+        finally
+        {
+            releaseWindow( window );
+        }
+    }
+    
     public Collection<DynamicRecord> allocateRecords( int startBlock,
         byte src[] )
     {

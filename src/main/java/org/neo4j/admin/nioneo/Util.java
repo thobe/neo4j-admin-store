@@ -1,8 +1,10 @@
 package org.neo4j.admin.nioneo;
 
 import org.neo4j.admin.nioneo.store.AbstractRecord;
+import org.neo4j.admin.nioneo.store.DynamicRecord;
 import org.neo4j.admin.nioneo.store.NodeRecord;
 import org.neo4j.admin.nioneo.store.PropertyRecord;
+import org.neo4j.admin.nioneo.store.PropertyType;
 import org.neo4j.admin.nioneo.store.RelationshipRecord;
 
 
@@ -49,6 +51,34 @@ public class Util
             buf.append( "|pP " ).append( record.getPrevProp() );
             buf.append( "|nP " ).append( record.getNextProp() );
             buf.append( "]" );        
+        }
+        else if ( rec instanceof DynamicRecord )
+        {
+            DynamicRecord record = (DynamicRecord) rec;
+            if ( record.getType() == PropertyType.STRING.intValue() )
+            {
+                buf.append( "string record #" );
+            }
+            else if ( record.getType() == PropertyType.ARRAY.intValue() )
+            {
+                buf.append( "array record #" );
+            }
+            else
+            {
+                buf.append( "dynamic record #" );
+            }
+            buf.append( record.getId() ).append( " [" );
+            buf.append( record.inUse() );
+            buf.append( "|pB " ).append( record.getPrevBlock() );
+            buf.append( "|l " ).append( record.getLength() );
+            buf.append( "|nB " ).append( record.getNextBlock() );
+            buf.append( "|" );
+            byte data[] = record.getData();
+            for ( int i = 0; i < 8; i++ )
+            {
+                buf.append( " " ).append( data[i] );
+            }
+            buf.append( "...]" );
         }
         else
         {

@@ -130,7 +130,7 @@ public abstract class AbstractDynamicStore extends CommonAbstractStore
     {
         super( fileName );
     }
-
+    
     /**
      * Loads this store validating version and id generator. Also the block size
      * is loaded (contained in first block)

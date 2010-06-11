@@ -4,12 +4,12 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.neo4j.admin.nioneo.store.AbstractRecord;
 import org.neo4j.admin.nioneo.store.DynamicArrayStore;
 import org.neo4j.admin.nioneo.store.DynamicStringStore;
 import org.neo4j.admin.nioneo.store.NodeStore;
 import org.neo4j.admin.nioneo.store.PropertyStore;
 import org.neo4j.admin.nioneo.store.RelationshipStore;
-import org.neo4j.admin.nioneo.store.AbstractRecord;
 import org.neo4j.shell.SimpleAppServer;
 
 public class NioneoServer extends SimpleAppServer

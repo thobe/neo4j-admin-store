@@ -622,8 +622,10 @@ public class AdminStore
                 }
                 if ( type == 9 && !arrayStartBlocks.remove( (int) prop ) )
                 {
-                    throw new IOException( "array start block[" + prop
-                        + "] not found for record " + i );
+                    System.out.println( "array start block[" + prop
+                            + "] not found for record " + i );
+//                    throw new IOException( "array start block[" + prop
+//                        + "] not found for record " + i );
                 }
                 if ( type == 2 && !stringStartBlocks.remove( (int) prop ) )
                 {

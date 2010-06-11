@@ -3,8 +3,10 @@ package org.neo4j.admin.nioneo;
 import java.rmi.RemoteException;
 
 import org.neo4j.admin.nioneo.store.AbstractRecord;
+import org.neo4j.admin.nioneo.store.DynamicRecord;
 import org.neo4j.admin.nioneo.store.NodeRecord;
 import org.neo4j.admin.nioneo.store.PropertyRecord;
+import org.neo4j.admin.nioneo.store.PropertyType;
 import org.neo4j.admin.nioneo.store.RelationshipRecord;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
@@ -37,6 +39,26 @@ public class Store extends NioneoApp
         {
             getServer().getPropStore().forceUpdateRecord( (PropertyRecord) record );
             response = "PropRecord #" + record.getId() + " stored";
+        }
+        else if ( record instanceof DynamicRecord )
+        {
+            DynamicRecord rec = (DynamicRecord )record;
+            if ( rec.getType() == PropertyType.STRING.intValue() )
+            {
+                getServer().getPropStore().getStringStore().forceUpdate( rec );
+                response = "StringRecord #" + record.getId() + " stored";
+
+            }
+            else if ( rec.getType() == PropertyType.ARRAY.intValue() )
+            {
+                getServer().getPropStore().getArrayStore().forceUpdate( rec );
+                response = "ArrayRecord #" + record.getId() + " stored";
+
+            }
+            else
+            {
+                response = "Error: unkown record type " + record;
+            }
         }
         else
         {

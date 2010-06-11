@@ -4,8 +4,6 @@ import java.rmi.RemoteException;
 
 import org.neo4j.admin.nioneo.store.NodeRecord;
 import org.neo4j.admin.nioneo.store.NodeStore;
-import org.neo4j.admin.nioneo.store.PropertyRecord;
-import org.neo4j.admin.nioneo.store.PropertyStore;
 import org.neo4j.admin.nioneo.store.Record;
 import org.neo4j.admin.nioneo.store.RelationshipRecord;
 import org.neo4j.admin.nioneo.store.RelationshipStore;

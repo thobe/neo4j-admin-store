@@ -22,6 +22,7 @@ public class Main
         server.addApp( DumpPrevChainForRelNode.class );
         server.addApp( FixRels.class );
         server.addApp( FixNodeProps.class );
+        server.addApp( FixNodeProps2.class );
         server.addApp( Load.class );
         server.addApp( Ls.class );
         server.addApp( Set.class );

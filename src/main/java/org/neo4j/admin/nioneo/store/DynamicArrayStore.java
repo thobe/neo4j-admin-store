@@ -561,4 +561,12 @@ public class DynamicArrayStore extends AbstractDynamicStore
             " towards a store that has been created by newer version " + 
             " of Neo4j." );
     }
+
+    @Override
+    public DynamicRecord forceGetRecord( int blockId )
+    {
+        DynamicRecord record = super.forceGetRecord( blockId );
+        record.setType( PropertyType.ARRAY.intValue() );
+        return record;
+    }
 }

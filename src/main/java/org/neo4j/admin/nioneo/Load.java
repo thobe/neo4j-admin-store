@@ -2,15 +2,11 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.NodeRecord;
-import org.neo4j.admin.nioneo.store.NodeStore;
-import org.neo4j.admin.nioneo.store.RelationshipStore;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.OptionValueType;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
 import org.neo4j.shell.ShellException;
-import org.neo4j.shell.impl.AbstractApp.OptionContext;
 
 public class Load extends NioneoApp
 {
@@ -24,6 +20,8 @@ public class Load extends NioneoApp
             "Load rel record" ) );
         this.addValueType( "p", new OptionContext( OptionValueType.NONE,
             "Load property record" ) );
+        this.addValueType( "s", new OptionContext( OptionValueType.NONE,
+        "Load property record" ) );
         
     }
     
@@ -44,6 +42,14 @@ public class Load extends NioneoApp
         else if ( parser.options().containsKey( "p" ) )
         {
             getServer().setRecord( getServer().getPropStore().forceGetRecord( id ) );
+        }
+        else if ( parser.options().containsKey( "s" ) )
+        {
+            getServer().setRecord( getServer().getPropStore().getStringStore().forceGetRecord( id )  );
+        }
+        else if ( parser.options().containsKey( "a" ) )
+        {
+            getServer().setRecord( getServer().getPropStore().getArrayStore().forceGetRecord( id )  );
         }
         else
         {

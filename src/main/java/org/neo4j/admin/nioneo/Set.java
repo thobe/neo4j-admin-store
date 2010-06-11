@@ -3,17 +3,15 @@ package org.neo4j.admin.nioneo;
 import java.rmi.RemoteException;
 
 import org.neo4j.admin.nioneo.store.AbstractRecord;
+import org.neo4j.admin.nioneo.store.DynamicRecord;
 import org.neo4j.admin.nioneo.store.NodeRecord;
-import org.neo4j.admin.nioneo.store.NodeStore;
 import org.neo4j.admin.nioneo.store.PropertyRecord;
 import org.neo4j.admin.nioneo.store.RelationshipRecord;
-import org.neo4j.admin.nioneo.store.RelationshipStore;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.OptionValueType;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
 import org.neo4j.shell.ShellException;
-import org.neo4j.shell.impl.AbstractApp.OptionContext;
 
 public class Set extends NioneoApp
 {
@@ -39,10 +37,17 @@ public class Set extends NioneoApp
 
         this.addValueType( "u", new OptionContext( OptionValueType.MUST,
             "Property set block value" ) );
-        this.addValueType( "pP", new OptionContext( OptionValueType.MUST,
+        this.addValueType( "i", new OptionContext( OptionValueType.MUST,
             "Property set prev property" ) );
         this.addValueType( "o", new OptionContext( OptionValueType.MUST,
             "Property set next property" ) );
+
+        this.addValueType( "k", new OptionContext( OptionValueType.MUST,
+            "Dynamic record set prev block" ) );
+        this.addValueType( "l", new OptionContext( OptionValueType.MUST,
+            "Dynamic record length value" ) );
+        this.addValueType( "m", new OptionContext( OptionValueType.MUST,
+            "Dynamic record set next block" ) );
     }
     
     public String execute( AppCommandParser parser, Session session, Output out )
@@ -115,6 +120,25 @@ public class Set extends NioneoApp
             if ( nP != null )
             {
                 rec.setNextProp( Integer.parseInt( nP ) );
+            }
+        }
+        else if ( record instanceof DynamicRecord )
+        {
+            DynamicRecord rec = (DynamicRecord) record;
+            String p = checkIfEndHead( parser.options().get( "k" ) );
+            String l = checkIfEndHead( parser.options().get( "l" ) );
+            String n = checkIfEndHead( parser.options().get( "m" ) );
+            if ( p != null )
+            {
+                rec.setPrevBlock( Integer.parseInt( p ) );
+            }
+            if ( l != null )
+            {
+                rec.setLength( Integer.parseInt( l ) );
+            }
+            if ( n != null )
+            {
+                rec.setNextBlock( Integer.parseInt( n ) );
             }
         }
         else

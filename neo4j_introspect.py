@@ -32,6 +32,7 @@ def util(func):
 
 @util
 def relationships(store, node):
+    """get all relationships linked to a node"""
     if isinstance(node, int):
         node = store.nodeStore.forceGetRecord(node)
     _node = node.id
@@ -46,6 +47,26 @@ def relationships(store, node):
         else:
             raise ValueError
 
+@util
+def scan(store, *filters):
+    """Scan a store for records that match all supplied filters"""
+    get = store.forceGetRecord
+    for i in xrange(store.highId):
+        item = get(i)
+        for f in filters:
+            if not f(item): break
+        else:
+            yield item
+
+@util
+def filter(**predicate):
+    """Return true if any of the supplied properties have the supplied value"""
+    def filter(item):
+        for key, value in predicate.items():
+            if getattr(item, key, None) == value: return True
+        return False
+    return filter
+
 del util
 
 def __main__(path=".",script=None):
@@ -54,14 +75,24 @@ def __main__(path=".",script=None):
         if os.path.isfile(path):
             path, script = ".", path
     env = dict(__utils)
-    env['store'] = GraphDatabaseStore(path)
+    store = GraphDatabaseStore(path)
+    env['store'] = store
     if script:
         with open(script) as script:
-            exec(script.read(), env)
+            store.makeStoreOk()
+            try:
+                exec(script.read(), env)
+            finally:
+                store.shutdown()
     else:
         from code import InteractiveConsole
         console = InteractiveConsole(locals=env)
-        console.interact(banner="Neo4j Store introspection console (Python)")
+        store.makeStoreOk()
+        try:
+            console.interact(
+                banner="Neo4j Store introspection console (Python)")
+        finally:
+            store.shutdown()
 
 if __name__ == '__main__':
     import sys

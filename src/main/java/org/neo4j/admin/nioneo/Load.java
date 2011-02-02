@@ -1,8 +1,28 @@
+/**
+ * Copyright (c) 2002-2011 "Neo Technology,"
+ * Network Engine for Objects in Lund AB [http://neotechnology.com]
+ *
+ * This file is part of Neo4j.
+ *
+ * Neo4j is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
 import org.neo4j.shell.AppCommandParser;
+import org.neo4j.shell.OptionDefinition;
 import org.neo4j.shell.OptionValueType;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -14,17 +34,17 @@ public class Load extends NioneoApp
     public Load()
     {
         super();
-        this.addValueType( "n", new OptionContext( OptionValueType.NONE,
+        this.addOptionDefinition( "n", new OptionDefinition( OptionValueType.NONE,
             "Load node record" ) );
-        this.addValueType( "r", new OptionContext( OptionValueType.NONE,
+        this.addOptionDefinition( "r", new OptionDefinition( OptionValueType.NONE,
             "Load rel record" ) );
-        this.addValueType( "p", new OptionContext( OptionValueType.NONE,
+        this.addOptionDefinition( "p", new OptionDefinition( OptionValueType.NONE,
             "Load property record" ) );
-        this.addValueType( "s", new OptionContext( OptionValueType.NONE,
+        this.addOptionDefinition( "s", new OptionDefinition( OptionValueType.NONE,
         "Load property record" ) );
-        
+
     }
-    
+
     public String execute( AppCommandParser parser, Session session, Output out )
             throws ShellException
     {

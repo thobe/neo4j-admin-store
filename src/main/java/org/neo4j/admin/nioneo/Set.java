@@ -1,3 +1,22 @@
+/**
+ * Copyright (c) 2002-2011 "Neo Technology,"
+ * Network Engine for Objects in Lund AB [http://neotechnology.com]
+ *
+ * This file is part of Neo4j.
+ *
+ * Neo4j is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
@@ -8,6 +27,7 @@ import org.neo4j.admin.nioneo.store.NodeRecord;
 import org.neo4j.admin.nioneo.store.PropertyRecord;
 import org.neo4j.admin.nioneo.store.RelationshipRecord;
 import org.neo4j.shell.AppCommandParser;
+import org.neo4j.shell.OptionDefinition;
 import org.neo4j.shell.OptionValueType;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -19,37 +39,37 @@ public class Set extends NioneoApp
     public Set()
     {
         super();
-        this.addValueType( "v", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "v", new OptionDefinition( OptionValueType.MUST,
             "Node set next relationship" ) );
-        this.addValueType( "b", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "b", new OptionDefinition( OptionValueType.MUST,
             "Node set next property" ) );
-        
-        this.addValueType( "q", new OptionContext( OptionValueType.MUST,
+
+        this.addOptionDefinition( "q", new OptionDefinition( OptionValueType.MUST,
             "Relationship set first prev rel" ) );
-        this.addValueType( "w", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "w", new OptionDefinition( OptionValueType.MUST,
             "Relationship set first next rel" ) );
-        this.addValueType( "e", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "e", new OptionDefinition( OptionValueType.MUST,
             "Relationship set second prev rel" ) );
-        this.addValueType( "r", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "r", new OptionDefinition( OptionValueType.MUST,
             "Relationship set second next rel" ) );
-        this.addValueType( "t", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "t", new OptionDefinition( OptionValueType.MUST,
             "Relationship set next prop" ) );
 
-        this.addValueType( "u", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "u", new OptionDefinition( OptionValueType.MUST,
             "Property set block value" ) );
-        this.addValueType( "i", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "i", new OptionDefinition( OptionValueType.MUST,
             "Property set prev property" ) );
-        this.addValueType( "o", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "o", new OptionDefinition( OptionValueType.MUST,
             "Property set next property" ) );
 
-        this.addValueType( "k", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "k", new OptionDefinition( OptionValueType.MUST,
             "Dynamic record set prev block" ) );
-        this.addValueType( "l", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "l", new OptionDefinition( OptionValueType.MUST,
             "Dynamic record length value" ) );
-        this.addValueType( "m", new OptionContext( OptionValueType.MUST,
+        this.addOptionDefinition( "m", new OptionDefinition( OptionValueType.MUST,
             "Dynamic record set next block" ) );
     }
-    
+
     public String execute( AppCommandParser parser, Session session, Output out )
             throws ShellException
     {
@@ -64,7 +84,7 @@ public class Set extends NioneoApp
             NodeRecord rec = (NodeRecord) record;
             String nR = checkIfEndHead( parser.options().get( "v" ) );
             String nP = checkIfEndHead( parser.options().get( "b" ) );
-            
+
             if ( nR != null )
             {
                 rec.setNextRel( Integer.parseInt( nR ) );
@@ -155,7 +175,7 @@ public class Set extends NioneoApp
         }
         return null;
     }
-    
+
     private String checkIfEndHead( String str )
     {
         if ( str == null )

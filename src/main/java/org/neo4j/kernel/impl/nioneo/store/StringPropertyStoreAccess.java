@@ -17,47 +17,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.admin.nioneo.store;
+package org.neo4j.kernel.impl.nioneo.store;
 
-public abstract class AbstractRecord
+public class StringPropertyStoreAccess extends DynamicStoreAccess<DynamicStringStore>
 {
-    private boolean inUse = false;
-    private final int id;
-    private boolean created = false;
-
-    AbstractRecord( int id )
+    StringPropertyStoreAccess( DynamicStringStore store )
     {
-        this.id = id;
+        super( store );
     }
 
-    AbstractRecord( int id, boolean inUse )
+    @Override
+    public DynamicRecord forceGetRecord( int blockId )
     {
-        this.id = id;
-        this.inUse = inUse;
-    }
-
-    public int getId()
-    {
-        return id;
-    }
-
-    public boolean inUse()
-    {
-        return inUse;
-    }
-
-    public void setInUse( boolean inUse )
-    {
-        this.inUse = inUse;
-    }
-
-    public void setCreated()
-    {
-        this.created = true;
-    }
-
-    public boolean isCreated()
-    {
-        return created;
+        DynamicRecord record = super.forceGetRecord( blockId );
+        record.setType( PropertyType.STRING.intValue() );
+        return record;
     }
 }

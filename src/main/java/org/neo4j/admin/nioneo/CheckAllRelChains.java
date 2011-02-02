@@ -20,14 +20,14 @@
 package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
-import org.neo4j.admin.nioneo.store.NodeRecord;
-import org.neo4j.admin.nioneo.store.NodeStore;
-import org.neo4j.admin.nioneo.store.Record;
-import org.neo4j.admin.nioneo.store.RelationshipRecord;
-import org.neo4j.admin.nioneo.store.RelationshipStore;
+import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
+import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.Record;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -42,8 +42,8 @@ public class CheckAllRelChains extends NioneoApp
         int count = 0;
         try
         {
-        RelationshipStore relStore = getServer().getRelStore();
-        NodeStore nodeStore = getServer().getNodeStore();
+        RelationshipStoreAccess relStore = getServer().getRelStore();
+        NodeStoreAccess nodeStore = getServer().getNodeStore();
         int maxNodeId = (int) nodeStore.getHighId();
         Set<Integer> chainedRels = new HashSet<Integer>();
         for ( int i = 0; i < maxNodeId; i++ )

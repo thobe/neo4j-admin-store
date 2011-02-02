@@ -21,11 +21,11 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.AbstractRecord;
-import org.neo4j.admin.nioneo.store.DynamicRecord;
-import org.neo4j.admin.nioneo.store.NodeRecord;
-import org.neo4j.admin.nioneo.store.PropertyRecord;
-import org.neo4j.admin.nioneo.store.RelationshipRecord;
+import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
+import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
+import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.OptionDefinition;
 import org.neo4j.shell.OptionValueType;

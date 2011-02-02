@@ -65,11 +65,11 @@ public class Load extends NioneoApp
         }
         else if ( parser.options().containsKey( "s" ) )
         {
-            getServer().setRecord( getServer().getPropStore().getStringStore().forceGetRecord( id )  );
+            getServer().setRecord( getServer().getStringStore().forceGetRecord( id ) );
         }
         else if ( parser.options().containsKey( "a" ) )
         {
-            getServer().setRecord( getServer().getPropStore().getArrayStore().forceGetRecord( id )  );
+            getServer().setRecord( getServer().getArrayStore().forceGetRecord( id ) );
         }
         else
         {

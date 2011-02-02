@@ -17,14 +17,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.admin.nioneo.store;
+package org.neo4j.kernel.impl.nioneo.store;
 
-/**
- * Defines the two types of operations that can be made to an acquired
- * {@link PersistenceWindow}. Operation is either <CODE>READ</CODE> or 
- * <CODE>WRITE</CODE>.
- */
-public enum OperationType
+public class ArrayPropertyStoreAccess extends DynamicStoreAccess<DynamicArrayStore>
 {
-    READ, WRITE
+    ArrayPropertyStoreAccess( DynamicArrayStore store )
+    {
+        super( store );
+    }
+
+    @Override
+    public DynamicRecord forceGetRecord( int blockId )
+    {
+        DynamicRecord record = super.forceGetRecord( blockId );
+        record.setType( PropertyType.ARRAY.intValue() );
+        return record;
+    }
 }

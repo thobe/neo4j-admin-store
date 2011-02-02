@@ -21,8 +21,8 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.DynamicRecord;
-import org.neo4j.admin.nioneo.store.DynamicStringStore;
+import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
+import org.neo4j.kernel.impl.nioneo.store.StringPropertyStoreAccess;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -36,7 +36,7 @@ public class LsString extends NioneoApp
     {
         String arg = parser.arguments().get( 0 );
         int id = Integer.parseInt( arg );
-        DynamicStringStore stringStore = getServer().getStringStore();
+        StringPropertyStoreAccess stringStore = getServer().getStringStore();
         DynamicRecord record = stringStore.forceGetRecord( id );
         StringBuffer buf = new StringBuffer( "str block #" );
         buf.append( record.getId() ).append( " [" );

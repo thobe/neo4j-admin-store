@@ -21,8 +21,8 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.RelationshipRecord;
-import org.neo4j.admin.nioneo.store.RelationshipStore;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -36,7 +36,7 @@ public class LsRel extends NioneoApp
     {
         String arg = parser.arguments().get( 0 );
         int id = Integer.parseInt( arg );
-        RelationshipStore relStore = getServer().getRelStore();
+        RelationshipStoreAccess relStore = getServer().getRelStore();
         RelationshipRecord record = relStore.forceGetRecord( id );
         try
         {

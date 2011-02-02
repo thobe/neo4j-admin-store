@@ -31,13 +31,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.neo4j.admin.nioneo.store.AbstractDynamicStore;
-import org.neo4j.admin.nioneo.store.DynamicRecord;
-import org.neo4j.admin.nioneo.store.NeoStore;
-import org.neo4j.admin.nioneo.store.PropertyRecord;
-import org.neo4j.admin.nioneo.store.PropertyStore;
-import org.neo4j.admin.nioneo.store.PropertyType;
-import org.neo4j.admin.nioneo.store.Record;
+
+import org.neo4j.kernel.impl.nioneo.store.AbstractDynamicStore;
+import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
+import org.neo4j.kernel.impl.nioneo.store.NeoStore;
+import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyStore;
+import org.neo4j.kernel.impl.nioneo.store.PropertyType;
+import org.neo4j.kernel.impl.nioneo.store.Record;
 
 public class AdminStore
 {
@@ -102,14 +103,15 @@ public class AdminStore
 
         public DynamicStringStore( String fileName, Map<?,?> config )
         {
-            super( fileName, config );
+            super( fileName, config,/*FIXME: proper parameters*/null );
         }
 
         public DynamicStringStore( String fileName )
         {
-            super( fileName );
+            super( fileName,/*FIXME: proper parameters*/null, null );
         }
 
+        @Override
         public String getTypeAndVersionDescriptor()
         {
             return VERSION;
@@ -117,7 +119,7 @@ public class AdminStore
 
         public static void createStore( String fileName, int blockSize )
         {
-            createEmptyStore( fileName, blockSize, VERSION );
+            createEmptyStore( fileName, blockSize, VERSION,/*FIXME: proper parameters*/null, null );
         }
 
         @Override
@@ -130,7 +132,7 @@ public class AdminStore
     private static void fixMultiIndex( String fileName )
     {
         String storeName = fileName + ".propertystore.db";
-        PropertyStore propStore = new PropertyStore( storeName );
+        PropertyStore propStore = new PropertyStore( storeName, /*FIXME: proper parameters*/null );
         propStore.makeStoreOk();
         for ( int i = 0; i < propStore.getHighestPossibleIdInUse(); i++ )
         {
@@ -138,7 +140,7 @@ public class AdminStore
             try
             {
                 record = propStore.getLightRecord( i );
-                if ( !record.inUse() || record.getPrevProp() != 
+                if ( !record.inUse() || record.getPrevProp() !=
                     Record.NO_PREVIOUS_PROPERTY.intValue() )
                 {
                     continue;
@@ -165,18 +167,18 @@ public class AdminStore
                     {
                         throw new RuntimeException();
                     }
-                    if ( record.getPrevProp() != 
+                    if ( record.getPrevProp() !=
                         Record.NO_PREVIOUS_PROPERTY.intValue() )
                     {
-                        PropertyRecord prev = propStore.getLightRecord( 
+                        PropertyRecord prev = propStore.getLightRecord(
                             record.getPrevProp() );
                         prev.setNextProp( record.getNextProp() );
                         propStore.updateRecord( prev );
                     }
-                    if ( record.getNextProp() != 
+                    if ( record.getNextProp() !=
                         Record.NO_NEXT_PROPERTY.intValue() )
                     {
-                        PropertyRecord next = propStore.getLightRecord( 
+                        PropertyRecord next = propStore.getLightRecord(
                             record.getNextProp() );
                         next.setPrevProp( record.getPrevProp() );
                         propStore.updateRecord( next );
@@ -218,7 +220,7 @@ public class AdminStore
         // in_use(byte)+type_blockId(int)
         System.out.println( storeName );
         ByteBuffer buffer = ByteBuffer.allocate( 5 );
-        FileChannel fileChannel = 
+        FileChannel fileChannel =
             new RandomAccessFile( storeName, "rw" ).getChannel();
         fileChannel.position( 0 );
         int i = 0;
@@ -281,7 +283,7 @@ public class AdminStore
             {
                 try
                 {
-                    Collection<DynamicRecord> records = 
+                    Collection<DynamicRecord> records =
                         typeNameStore.getRecords( block );
                     name = getOldStringFor( records, block );
                     for ( DynamicRecord record : records )
@@ -321,7 +323,8 @@ public class AdminStore
 
     public static void createStore( String fileName )
     {
-        NeoStore.createStore( fileName );
+        // FIXME: proper parameters
+        NeoStore.createStore( fileName, null );
     }
 
     private static String getStringFor( Collection<DynamicRecord> recordsCol,

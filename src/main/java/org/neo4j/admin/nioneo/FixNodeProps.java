@@ -21,13 +21,13 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.DynamicRecord;
-import org.neo4j.admin.nioneo.store.NodeRecord;
-import org.neo4j.admin.nioneo.store.NodeStore;
-import org.neo4j.admin.nioneo.store.PropertyRecord;
-import org.neo4j.admin.nioneo.store.PropertyStore;
-import org.neo4j.admin.nioneo.store.PropertyType;
-import org.neo4j.admin.nioneo.store.Record;
+import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
+import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
+import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.PropertyType;
+import org.neo4j.kernel.impl.nioneo.store.Record;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -41,8 +41,8 @@ public class FixNodeProps extends NioneoApp
     {
         String arg = parser.arguments().get( 0 );
         int id = Integer.parseInt( arg );
-        NodeStore nodeStore = getServer().getNodeStore();
-        PropertyStore propStore = getServer().getPropStore();
+        NodeStoreAccess nodeStore = getServer().getNodeStore();
+        PropertyStoreAccess propStore = getServer().getPropStore();
         NodeRecord nodeRecord = nodeStore.forceGetRecord( id );
         int nextProp = nodeRecord.getNextProp();
         int startProp = nextProp;
@@ -66,11 +66,11 @@ public class FixNodeProps extends NioneoApp
                     propStore.forceUpdateRecord( prev );
                 }
             }
-            else 
+            else
             {
                 if ( propRecord.getType() == PropertyType.STRING )
                 {
-                    DynamicRecord dr = getServer().getStringStore().forceGetRecord( 
+                    DynamicRecord dr = getServer().getStringStore().forceGetRecord(
                         (int) propRecord.getPropBlock() );
                     if ( !dr.inUse() )
                     {
@@ -87,7 +87,7 @@ public class FixNodeProps extends NioneoApp
                 }
                 else if ( propRecord.getType() == PropertyType.ARRAY )
                 {
-                    DynamicRecord dr = getServer().getArrayStore().forceGetRecord( 
+                    DynamicRecord dr = getServer().getArrayStore().forceGetRecord(
                         (int) propRecord.getPropBlock() );
                     if ( !dr.inUse() )
                     {

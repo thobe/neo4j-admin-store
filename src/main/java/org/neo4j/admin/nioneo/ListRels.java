@@ -21,11 +21,11 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.NodeRecord;
-import org.neo4j.admin.nioneo.store.NodeStore;
-import org.neo4j.admin.nioneo.store.Record;
-import org.neo4j.admin.nioneo.store.RelationshipRecord;
-import org.neo4j.admin.nioneo.store.RelationshipStore;
+import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
+import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.Record;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -39,9 +39,9 @@ public class ListRels extends NioneoApp
     {
         String arg = parser.arguments().get( 0 );
         int nodeId = Integer.parseInt( arg );
-        NodeStore nodeStore = getServer().getNodeStore();
+        NodeStoreAccess nodeStore = getServer().getNodeStore();
         NodeRecord nodeRecord = nodeStore.getRecord( nodeId );
-        RelationshipStore relStore = getServer().getRelStore();
+        RelationshipStoreAccess relStore = getServer().getRelStore();
         int nextRelId = nodeRecord.getNextRel();
         int prevRelId = -1;
         StringBuffer hits = new StringBuffer();

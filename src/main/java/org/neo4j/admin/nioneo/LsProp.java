@@ -21,8 +21,8 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.PropertyRecord;
-import org.neo4j.admin.nioneo.store.PropertyStore;
+import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyStoreAccess;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -36,7 +36,7 @@ public class LsProp extends NioneoApp
     {
         String arg = parser.arguments().get( 0 );
         int id = Integer.parseInt( arg );
-        PropertyStore propStore = getServer().getPropStore();
+        PropertyStoreAccess propStore = getServer().getPropStore();
         PropertyRecord record = propStore.forceGetRecord( id );
         try
         {

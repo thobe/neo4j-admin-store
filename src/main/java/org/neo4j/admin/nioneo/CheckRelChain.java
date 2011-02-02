@@ -21,11 +21,11 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.NodeRecord;
-import org.neo4j.admin.nioneo.store.NodeStore;
-import org.neo4j.admin.nioneo.store.Record;
-import org.neo4j.admin.nioneo.store.RelationshipRecord;
-import org.neo4j.admin.nioneo.store.RelationshipStore;
+import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
+import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.Record;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -39,9 +39,9 @@ public class CheckRelChain extends NioneoApp
     {
         String arg = parser.arguments().get( 0 );
         int nodeId = Integer.parseInt( arg );
-        NodeStore nodeStore = getServer().getNodeStore();
+        NodeStoreAccess nodeStore = getServer().getNodeStore();
         NodeRecord nodeRecord = nodeStore.getRecord( nodeId );
-        RelationshipStore relStore = getServer().getRelStore();
+        RelationshipStoreAccess relStore = getServer().getRelStore();
         String hit = "No rels found";
         int nextRelId = nodeRecord.getNextRel();
         int prevRelId = -1;
@@ -79,7 +79,7 @@ public class CheckRelChain extends NioneoApp
                 nextRelId = Record.NO_PREV_RELATIONSHIP.intValue();
                 error = true;
             }
-        } 
+        }
         if ( !error && hits.length() > 0 )
         {
             hit = hits.toString();
@@ -97,7 +97,7 @@ public class CheckRelChain extends NioneoApp
 
     void relDelete( RelationshipRecord rel )
     {
-        RelationshipStore relStore = getServer().getRelStore();
+        RelationshipStoreAccess relStore = getServer().getRelStore();
         if ( rel.getFirstPrevRel() != Record.NO_NEXT_RELATIONSHIP.intValue() )
         {
             RelationshipRecord prevRel = relStore.forceGetRecord( rel.getFirstPrevRel() );
@@ -111,7 +111,7 @@ public class CheckRelChain extends NioneoApp
             }
             else
             {
-                throw new RuntimeException( 
+                throw new RuntimeException(
                     prevRel + " don't match " + rel );
             }
             relStore.forceUpdateRecord( prevRel );
@@ -130,7 +130,7 @@ public class CheckRelChain extends NioneoApp
             }
             else
             {
-                throw new RuntimeException( nextRel + " don't match " 
+                throw new RuntimeException( nextRel + " don't match "
                     + rel );
             }
             relStore.forceUpdateRecord( nextRel );
@@ -149,7 +149,7 @@ public class CheckRelChain extends NioneoApp
             }
             else
             {
-                throw new RuntimeException( prevRel + " don't match " + 
+                throw new RuntimeException( prevRel + " don't match " +
                     rel );
             }
             relStore.forceUpdateRecord( prevRel );
@@ -168,13 +168,13 @@ public class CheckRelChain extends NioneoApp
             }
             else
             {
-                throw new RuntimeException( nextRel + " don't match " + 
+                throw new RuntimeException( nextRel + " don't match " +
                     rel );
             }
             relStore.forceUpdateRecord( nextRel );
         }
 
-        NodeStore nodeStore = getServer().getNodeStore();
+        NodeStoreAccess nodeStore = getServer().getNodeStore();
         if ( rel.getFirstPrevRel() == Record.NO_PREV_RELATIONSHIP.intValue() )
         {
             NodeRecord firstNode = nodeStore.forceGetRecord( rel.getFirstNode() );

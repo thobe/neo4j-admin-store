@@ -21,9 +21,9 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.Record;
-import org.neo4j.admin.nioneo.store.RelationshipRecord;
-import org.neo4j.admin.nioneo.store.RelationshipStore;
+import org.neo4j.kernel.impl.nioneo.store.Record;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -38,7 +38,7 @@ public class FindStartRelForRelNode extends NioneoApp
         String arg = parser.arguments().get( 0 );
         int relId = Integer.parseInt( arg );
         int nodeId = Integer.parseInt( parser.arguments().get( 1 ) );
-        RelationshipStore relStore = getServer().getRelStore();
+        RelationshipStoreAccess relStore = getServer().getRelStore();
         String hit = "Not found";
         int nextRelId = relId;
         int prevRelId = -1;

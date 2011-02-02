@@ -21,7 +21,7 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.AbstractRecord;
+import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -43,7 +43,7 @@ public class Toggle extends NioneoApp
             record.setInUse( false );
             response = "Marked as not in use";
         }
-        else 
+        else
         {
             record.setInUse( true );
             response = "Marked as in use";

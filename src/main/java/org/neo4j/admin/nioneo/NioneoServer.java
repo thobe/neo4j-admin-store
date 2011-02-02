@@ -23,39 +23,25 @@ import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.neo4j.admin.nioneo.store.AbstractRecord;
-import org.neo4j.admin.nioneo.store.DynamicArrayStore;
-import org.neo4j.admin.nioneo.store.DynamicStringStore;
-import org.neo4j.admin.nioneo.store.NodeStore;
-import org.neo4j.admin.nioneo.store.PropertyStore;
-import org.neo4j.admin.nioneo.store.RelationshipStore;
+import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
+import org.neo4j.kernel.impl.nioneo.store.DynamicStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.GraphDatabaseStore;
+import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.PropertyStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.StringPropertyStoreAccess;
 import org.neo4j.shell.SimpleAppServer;
 
 public class NioneoServer extends SimpleAppServer
 {
-    private final NodeStore nodeStore;
-    private final RelationshipStore relStore;
-    private final PropertyStore propStore;
-    private final DynamicStringStore stringStore;
-    private final DynamicArrayStore arrayStore;
-    
     private AbstractRecord currentRecord;
+    private final GraphDatabaseStore store;
 
     public NioneoServer( String path ) throws RemoteException
     {
         super();
-        nodeStore = new NodeStore( path + "/neostore.nodestore.db",
-                getDefaultParams() );
-        relStore = new RelationshipStore( path
-                                          + "/neostore.relationshipstore.db",
-                getDefaultParams() );
-        propStore = new PropertyStore( path + "/neostore.propertystore.db",
-                getDefaultParams() );
-        stringStore = propStore.getStringStore();
-        arrayStore = propStore.getArrayStore();
-        nodeStore.makeStoreOk();
-        relStore.makeStoreOk();
-        propStore.makeStoreOk();
+        store = new GraphDatabaseStore( path );
+        store.makeStoreOk();
     }
 
     private Map<Object, Object> getDefaultParams()
@@ -77,44 +63,43 @@ public class NioneoServer extends SimpleAppServer
         return params;
     }
 
-    public NodeStore getNodeStore()
+    public NodeStoreAccess getNodeStore()
     {
-        return nodeStore;
+        return store.getNodeStore();
     }
 
-    public RelationshipStore getRelStore()
+    public RelationshipStoreAccess getRelStore()
     {
-        return relStore;
+        return store.getRelStore();
     }
 
-    public PropertyStore getPropStore()
+    public PropertyStoreAccess getPropStore()
     {
-        return propStore;
+        return store.getPropStore();
     }
 
-    public DynamicStringStore getStringStore()
+    public StringPropertyStoreAccess getStringStore()
     {
-        return stringStore;
+        return store.getStringPropertyStore();
     }
 
-    public DynamicArrayStore getArrayStore()
+    public DynamicStoreAccess getArrayStore()
     {
-        return arrayStore;
+        return store.getArrayPropertyStore();
     }
-    
+
+    @Override
     public void shutdown()
     {
         super.shutdown();
-        nodeStore.close();
-        relStore.close();
-        propStore.close();
+        store.shutdown();
     }
-    
+
     public void setRecord( AbstractRecord record )
     {
         this.currentRecord = record;
     }
-    
+
     public AbstractRecord getCurrentRecord()
     {
         return this.currentRecord;

@@ -21,12 +21,12 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.AbstractRecord;
-import org.neo4j.admin.nioneo.store.DynamicRecord;
-import org.neo4j.admin.nioneo.store.NodeRecord;
-import org.neo4j.admin.nioneo.store.PropertyRecord;
-import org.neo4j.admin.nioneo.store.PropertyType;
-import org.neo4j.admin.nioneo.store.RelationshipRecord;
+import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
+import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
+import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyType;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -64,13 +64,13 @@ public class Store extends NioneoApp
             DynamicRecord rec = (DynamicRecord )record;
             if ( rec.getType() == PropertyType.STRING.intValue() )
             {
-                getServer().getPropStore().getStringStore().forceUpdate( rec );
+                getServer().getStringStore().forceUpdate( rec );
                 response = "StringRecord #" + record.getId() + " stored";
 
             }
             else if ( rec.getType() == PropertyType.ARRAY.intValue() )
             {
-                getServer().getPropStore().getArrayStore().forceUpdate( rec );
+                getServer().getArrayStore().forceUpdate( rec );
                 response = "ArrayRecord #" + record.getId() + " stored";
 
             }

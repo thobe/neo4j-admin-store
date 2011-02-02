@@ -21,11 +21,11 @@ package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
 
-import org.neo4j.admin.nioneo.store.NodeRecord;
-import org.neo4j.admin.nioneo.store.NodeStore;
-import org.neo4j.admin.nioneo.store.Record;
-import org.neo4j.admin.nioneo.store.RelationshipRecord;
-import org.neo4j.admin.nioneo.store.RelationshipStore;
+import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
+import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.Record;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -37,8 +37,8 @@ public class CheckRels extends NioneoApp
     public String execute( AppCommandParser parser, Session session, Output out )
             throws ShellException
     {
-        NodeStore nodeStore = getServer().getNodeStore();
-        RelationshipStore relStore = getServer().getRelStore();
+        NodeStoreAccess nodeStore = getServer().getNodeStore();
+        RelationshipStoreAccess relStore = getServer().getRelStore();
         int maxRelId = (int) relStore.getHighId();
         int count = 0 ;
         for ( int i = 0; i < maxRelId; i++ )
@@ -60,7 +60,7 @@ public class CheckRels extends NioneoApp
                 relDelete( record );
                 count++;
             }
-            else 
+            else
             {
 //                if ( record.getFirstPrevRel() != Record.NO_PREV_RELATIONSHIP.intValue() )
 //                {
@@ -71,14 +71,14 @@ public class CheckRels extends NioneoApp
 //                    }
 //                    else
 //                    {
-//                        if ( prevRel.getFirstNode() == record.getFirstNode() && 
+//                        if ( prevRel.getFirstNode() == record.getFirstNode() &&
 //                            prevRel.getFirstNextRel() != record.getId() )
 //                        {
 //                            relDelete( record );
 //                            count++;
 //                        }
-//                        else if ( prevRel.getSecondNode() == record.getFirstNode() && 
-//                            prevRel.getSecondNextRel() != record.getId() ) 
+//                        else if ( prevRel.getSecondNode() == record.getFirstNode() &&
+//                            prevRel.getSecondNextRel() != record.getId() )
 //                        {
 //                            relDelete( record );
 //                            count++;
@@ -94,14 +94,14 @@ public class CheckRels extends NioneoApp
 //                    }
 //                    else
 //                    {
-//                        if ( prevRel.getFirstNode() == record.getSecondNode() && 
+//                        if ( prevRel.getFirstNode() == record.getSecondNode() &&
 //                            prevRel.getFirstNextRel() != record.getId() )
 //                        {
 //                            relDelete( record );
 //                            count++;
 //                        }
 //                        else if ( prevRel.getSecondNode() == record.getSecondNode() &&
-//                            prevRel.getSecondNextRel() != record.getId() ) 
+//                            prevRel.getSecondNextRel() != record.getId() )
 //                        {
 //                            relDelete( record );
 //                            count++;
@@ -117,14 +117,14 @@ public class CheckRels extends NioneoApp
 //                    }
 //                    else
 //                    {
-//                        if ( nextRel.getFirstNode() == record.getFirstNode() && 
+//                        if ( nextRel.getFirstNode() == record.getFirstNode() &&
 //                            nextRel.getFirstPrevRel() != record.getId() )
 //                        {
 //                            relDelete( record );
 //                            count++;
 //                        }
-//                        else if ( nextRel.getSecondNode() == record.getFirstNode() && 
-//                            nextRel.getSecondPrevRel() != record.getId() ) 
+//                        else if ( nextRel.getSecondNode() == record.getFirstNode() &&
+//                            nextRel.getSecondPrevRel() != record.getId() )
 //                        {
 //                            relDelete( record );
 //                            count++;
@@ -140,14 +140,14 @@ public class CheckRels extends NioneoApp
 //                    }
 //                    else
 //                    {
-//                        if ( nextRel.getFirstNode() == record.getSecondNode() && 
+//                        if ( nextRel.getFirstNode() == record.getSecondNode() &&
 //                            nextRel.getFirstPrevRel() != record.getId() )
 //                        {
 //                            relDelete( record );
 //                            count++;
 //                        }
-//                        else if ( nextRel.getSecondNode() == record.getSecondNode() && 
-//                            nextRel.getSecondPrevRel() != record.getId() ) 
+//                        else if ( nextRel.getSecondNode() == record.getSecondNode() &&
+//                            nextRel.getSecondPrevRel() != record.getId() )
 //                        {
 //                            relDelete( record );
 //                            count++;
@@ -155,7 +155,7 @@ public class CheckRels extends NioneoApp
 //                    }
 //                }
             }
-        } 
+        }
         try
         {
             out.println( count + " rels deleted" );
@@ -169,18 +169,18 @@ public class CheckRels extends NioneoApp
 
     void relDelete( RelationshipRecord rel )
     {
-        RelationshipStore relStore = getServer().getRelStore();
+        RelationshipStoreAccess relStore = getServer().getRelStore();
         if ( rel.getFirstPrevRel() != Record.NO_NEXT_RELATIONSHIP.intValue() )
         {
             RelationshipRecord prevRel = relStore.forceGetRecord( rel.getFirstPrevRel() );
             if ( prevRel.inUse() )
             {
-                if ( prevRel.getFirstNode() == rel.getFirstNode() && 
+                if ( prevRel.getFirstNode() == rel.getFirstNode() &&
                     prevRel.getFirstNextRel() == rel.getId() )
                 {
                     prevRel.setFirstNextRel( rel.getFirstNextRel() );
                 }
-                else if ( prevRel.getSecondNode() == rel.getFirstNode() && 
+                else if ( prevRel.getSecondNode() == rel.getFirstNode() &&
                     prevRel.getSecondNextRel() == rel.getId() )
                 {
                     prevRel.setSecondNextRel( rel.getFirstNextRel() );
@@ -194,12 +194,12 @@ public class CheckRels extends NioneoApp
             RelationshipRecord nextRel = relStore.forceGetRecord( rel.getFirstNextRel() );
             if ( nextRel.inUse() )
             {
-                if ( nextRel.getFirstNode() == rel.getFirstNode() && 
+                if ( nextRel.getFirstNode() == rel.getFirstNode() &&
                     nextRel.getFirstPrevRel() == rel.getId() )
                 {
                     nextRel.setFirstPrevRel( rel.getFirstPrevRel() );
                 }
-                else if ( nextRel.getSecondNode() == rel.getFirstNode() && 
+                else if ( nextRel.getSecondNode() == rel.getFirstNode() &&
                     nextRel.getSecondPrevRel() == rel.getId() )
                 {
                     nextRel.setSecondPrevRel( rel.getFirstPrevRel() );
@@ -213,12 +213,12 @@ public class CheckRels extends NioneoApp
             RelationshipRecord prevRel = relStore.forceGetRecord( rel.getSecondPrevRel() );
             if ( prevRel.inUse() )
             {
-                if ( prevRel.getFirstNode() == rel.getSecondNode() && 
+                if ( prevRel.getFirstNode() == rel.getSecondNode() &&
                     prevRel.getFirstNextRel() == rel.getId() )
                 {
                     prevRel.setFirstNextRel( rel.getSecondNextRel() );
                 }
-                else if ( prevRel.getSecondNode() == rel.getSecondNode() && 
+                else if ( prevRel.getSecondNode() == rel.getSecondNode() &&
                     prevRel.getSecondNextRel() == rel.getId() )
                 {
                     prevRel.setSecondNextRel( rel.getSecondNextRel() );
@@ -232,12 +232,12 @@ public class CheckRels extends NioneoApp
             RelationshipRecord nextRel = relStore.forceGetRecord( rel.getSecondNextRel() );
             if ( nextRel.inUse() )
             {
-                if ( nextRel.getFirstNode() == rel.getSecondNode() && 
+                if ( nextRel.getFirstNode() == rel.getSecondNode() &&
                     nextRel.getFirstPrevRel() == rel.getId() )
                 {
                     nextRel.setFirstPrevRel( rel.getSecondPrevRel() );
                 }
-                else if ( nextRel.getSecondNode() == rel.getSecondNode() && 
+                else if ( nextRel.getSecondNode() == rel.getSecondNode() &&
                     nextRel.getSecondPrevRel() == rel.getId() )
                 {
                     nextRel.setSecondPrevRel( rel.getSecondPrevRel() );
@@ -246,7 +246,7 @@ public class CheckRels extends NioneoApp
             }
         }
 
-        NodeStore nodeStore = getServer().getNodeStore();
+        NodeStoreAccess nodeStore = getServer().getNodeStore();
         if ( rel.getFirstPrevRel() == Record.NO_PREV_RELATIONSHIP.intValue() )
         {
             NodeRecord firstNode = nodeStore.forceGetRecord( rel.getFirstNode() );

@@ -1,0 +1,6 @@
+org.neo4j.admin.tool.stringstat.NineSevenBitAscii
+org.neo4j.admin.tool.stringstat.LowerCaseHexadecimal
+org.neo4j.admin.tool.stringstat.UpperCaseHexadecimal
+org.neo4j.admin.tool.stringstat.PunctuatedNumerical
+org.neo4j.admin.tool.stringstat.AlphaNumericalName
+org.neo4j.admin.tool.stringstat.Numerical

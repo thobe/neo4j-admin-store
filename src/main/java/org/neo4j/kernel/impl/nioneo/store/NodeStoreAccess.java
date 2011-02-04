@@ -19,18 +19,11 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
-public class NodeStoreAccess
+public class NodeStoreAccess extends StoreAccess<NodeStore, NodeRecord>
 {
-    private final NodeStore store;
-
     NodeStoreAccess( NodeStore store )
     {
-        this.store = store;
-    }
-
-    public long getHighId()
-    {
-        return store.getHighId();
+        super( store );
     }
 
     public NodeRecord getRecord( int id )
@@ -38,6 +31,7 @@ public class NodeStoreAccess
         return store.getRecord( id );
     }
 
+    @Override
     public NodeRecord forceGetRecord( int id )
     {
         PersistenceWindow window = store.acquireWindow( id, OperationType.READ );

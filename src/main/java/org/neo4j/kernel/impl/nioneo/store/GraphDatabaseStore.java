@@ -41,6 +41,7 @@ public class GraphDatabaseStore
     private final PropertyStore propStore;
     private final DynamicStringStore stringStore;
     private final DynamicArrayStore arrayStore;
+    private final String path;
 
     public GraphDatabaseStore( String path )
     {
@@ -81,11 +82,23 @@ public class GraphDatabaseStore
 
     public GraphDatabaseStore( String path, Map<Object, Object> params )
     {
-        nodeStore = new NodeStore( path + "/neostore.nodestore.db", params );
-        relStore = new RelationshipStore( path + "/neostore.relationshipstore.db", params );
-        propStore = new PropertyStore( path + "/neostore.propertystore.db", params );
-        stringStore = (DynamicStringStore) get( propStore, STRING_PROPERTY_STORE );
-        arrayStore = (DynamicArrayStore) get( propStore, ARRAY_PROPERTY_STORE );
+        this.path = path;
+        this.nodeStore = new NodeStore( path + "/neostore.nodestore.db", params );
+        this.relStore = new RelationshipStore( path + "/neostore.relationshipstore.db", params );
+        this.propStore = new PropertyStore( path + "/neostore.propertystore.db", params );
+        this.stringStore = (DynamicStringStore) get( propStore, STRING_PROPERTY_STORE );
+        this.arrayStore = (DynamicArrayStore) get( propStore, ARRAY_PROPERTY_STORE );
+    }
+
+    @Override
+    public String toString()
+    {
+        return getClass().getSimpleName() + "[" + path + "]";
+    }
+
+    public LogicalLogAccess logicalLog( String name )
+    {
+        return new LogicalLogAccess( path, name );
     }
 
     public void makeStoreOk()

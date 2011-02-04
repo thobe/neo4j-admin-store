@@ -31,12 +31,17 @@ def util(func):
     return func
 
 @util
-def relationships(store, node):
+def relationships(store, node, rel=None):
     """get all relationships linked to a node"""
     if isinstance(node, int):
         node = store.nodeStore.forceGetRecord(node)
     _node = node.id
-    _rel = node.nextRel
+    if rel is None:
+        _rel = node.nextRel
+    elif isinstance(rel, int):
+        _rel = rel
+    else:
+        _rel = rel.id
     while _rel != -1:
         rel = store.relStore.forceGetRecord(_rel)
         yield rel
@@ -51,12 +56,20 @@ def relationships(store, node):
 def scan(store, *filters):
     """Scan a store for records that match all supplied filters"""
     get = store.forceGetRecord
-    for i in xrange(store.highId):
+    for i in xrange(store.highId):#XXX: should this be highId+1?
         item = get(i)
         for f in filters:
             if not f(item): break
         else:
             yield item
+
+@util
+def used(item):
+    return item.inUse()
+
+@util
+def unused(item):
+    return not item.inUse()
 
 @util
 def filter(**predicate):
@@ -66,6 +79,15 @@ def filter(**predicate):
             if getattr(item, key, None) == value: return True
         return False
     return filter
+
+@util
+def printAll(it, *attrs):  
+    for el in it:
+        if not attrs:
+            print el
+            continue
+        print "; ".join(("%s: %s" % (attr,getattr(el,attr,None)))
+                       for attr in attrs)
 
 del util
 

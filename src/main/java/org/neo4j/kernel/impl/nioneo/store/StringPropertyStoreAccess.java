@@ -19,6 +19,8 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
+import java.nio.ByteBuffer;
+
 public class StringPropertyStoreAccess extends DynamicStoreAccess<DynamicStringStore>
 {
     StringPropertyStoreAccess( DynamicStringStore store )
@@ -32,5 +34,25 @@ public class StringPropertyStoreAccess extends DynamicStoreAccess<DynamicStringS
         DynamicRecord record = super.forceGetRecord( blockId );
         record.setType( PropertyType.STRING.intValue() );
         return record;
+    }
+
+    public String toString( DynamicRecord record )
+    {
+        if ( record.isLight() )
+        {
+            makeHeavy( record );
+        }
+        final char[] chars;
+        if ( !record.isCharData() )
+        {
+            ByteBuffer buf = ByteBuffer.wrap( record.getData() );
+            chars = new char[record.getData().length / 2];
+            buf.asCharBuffer().get( chars );
+        }
+        else
+        {
+            chars = record.getDataAsChar();
+        }
+        return new String( chars, 0, record.getLength() / 2 );
     }
 }

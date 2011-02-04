@@ -19,15 +19,14 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
-public class PropertyStoreAccess
+public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyRecord>
 {
-    private final PropertyStore store;
-
     PropertyStoreAccess( PropertyStore store )
     {
-        this.store = store;
+        super( store );
     }
 
+    @Override
     public PropertyRecord forceGetRecord( int id )
     {
         PersistenceWindow window = store.acquireWindow( id, OperationType.READ );

@@ -20,20 +20,25 @@
 package org.neo4j.kernel.impl.nioneo.store;
 
 @SuppressWarnings( "boxing" )
-public abstract class DynamicStoreAccess<T extends AbstractDynamicStore>
+public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends StoreAccess<T, DynamicRecord>
 {
     private static final int BLOCK_HEADER_SIZE;
     static
     {
         BLOCK_HEADER_SIZE = (Integer) GraphDatabaseStore.get( AbstractDynamicStore.class, "BLOCK_HEADER_SIZE", null );
     }
-    private final T store;
+
+    public void makeHeavy( DynamicRecord record )
+    {
+        store.makeHeavy( record );
+    }
 
     DynamicStoreAccess( T store )
     {
-        this.store = store;
+        super( store );
     }
 
+    @Override
     public DynamicRecord forceGetRecord( int blockId )
     {
         PersistenceWindow window = store.acquireWindow( blockId, OperationType.READ );
@@ -48,11 +53,11 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore>
             int dataSize = store.getBlockSize() - BLOCK_HEADER_SIZE;
             int nrOfBytes = buffer.getInt();
             int nextBlock = buffer.getInt();
-            record.setLength( nrOfBytes );
             record.setNextBlock( nextBlock );
             byte byteArrayElement[] = new byte[dataSize];
             buffer.get( byteArrayElement );
             record.setData( byteArrayElement );
+            record.setLength( nrOfBytes );
             return record;
         }
         finally

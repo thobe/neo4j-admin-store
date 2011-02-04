@@ -19,13 +19,11 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
-public class RelationshipStoreAccess
+public class RelationshipStoreAccess extends StoreAccess<RelationshipStore, RelationshipRecord>
 {
-    private final RelationshipStore store;
-
     RelationshipStoreAccess( RelationshipStore store )
     {
-        this.store = store;
+        super( store );
     }
 
     public RelationshipRecord getRecord( int id )
@@ -33,11 +31,7 @@ public class RelationshipStoreAccess
         return store.getRecord( id );
     }
 
-    public long getHighId()
-    {
-        return store.getHighId();
-    }
-
+    @Override
     public RelationshipRecord forceGetRecord( int id )
     {
         PersistenceWindow window = store.acquireWindow( id, OperationType.READ );

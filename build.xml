@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2002-2011 "Neo Technology,"
+    Network Engine for Objects in Lund AB [http://neotechnology.com]
+
+    This file is part of Neo4j.
+
+    Neo4j is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Affero General Public License as
+    published by the Free Software Foundation, either version 3 of the
+    License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Affero General Public License for more details.
+
+    You should have received a copy of the GNU Affero General Public License
+    along with this program. If not, see <http://www.gnu.org/licenses/>.
+
+-->
+<project name="" default="all" basedir=".">
+  <property name="target" location="${basedir}/target"/>
+  <property name="resources" location="${basedir}/src/main/resources"/>
+
+  <target name="string property statisics" depends="build">
+    <package tool="stringstat"/>
+  </target>
+
+  <target name="all" depends="string property statisics"/>
+
+  <macrodef name="package">
+    <attribute name="tool"/>
+    <sequential>
+      <jar destfile="${target}/@{tool}.jar">
+        <fileset dir="${target}/classes"
+                 includes="org/neo4j/kernel/impl/nioneo/store/*.class"/>
+        <fileset dir="${target}/classes"
+                 includes="org/neo4j/admin/tool/@{tool}/*.class"/>
+        <fileset dir="${resources}" includes="**/*"/>
+        <zipfileset src="${target}/dependency/neo4j-kernel-1.2-1.2.jar"
+                    includes="**/*.class" />
+        <manifest>
+          <attribute name="Main-Class"
+                     value="org.neo4j.admin.tool.@{tool}.Main"/>
+        </manifest>
+      </jar>
+    </sequential>
+  </macrodef>
+
+  <target name="build">
+    <exec executable="mvn">
+      <arg value="clean"/>
+      <arg value="compile"/>
+      <arg value="dependency:copy-dependencies"/>
+    </exec>
+  </target>
+</project>

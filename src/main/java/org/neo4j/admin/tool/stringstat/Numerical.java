@@ -26,7 +26,7 @@ public class Numerical extends StringType
     @Override
     boolean matches( String string )
     {
-        if ( string.length() > 19 ) return false;
+        if ( string.length() > 19 || string.length() == 0 ) return false;
         char c = string.charAt( 0 );
         if ( !( c == '-' || ( c >= '0' && c <= '9' ) ) ) return false;
         long integer;

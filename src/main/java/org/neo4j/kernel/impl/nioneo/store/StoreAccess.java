@@ -37,6 +37,11 @@ public abstract class StoreAccess<T extends CommonAbstractStore, R extends Abstr
         return store.getHighId();
     }
 
+    public void rebuildIdGenerators()
+    {
+        store.rebuildIdGenerators();
+    }
+
     public abstract R forceGetRecord( int id );
 
     public Iterable<R> scan( final Filter<? super R>... filters )

@@ -55,9 +55,4 @@ public class StringPropertyStoreAccess extends DynamicStoreAccess<DynamicStringS
         }
         return new String( chars, 0, record.getLength() / 2 );
     }
-
-    public void rebuildIdGenerators()
-    {
-        store.rebuildIdGenerators();
-    }
 }

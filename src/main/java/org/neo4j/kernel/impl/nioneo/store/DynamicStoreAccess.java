@@ -75,7 +75,7 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
             Buffer buffer = window.getOffsettedBuffer( blockId );
             buffer.put( record.inUse() ? Record.IN_USE.byteValue() : Record.NOT_IN_USE.byteValue() ).putInt(
                     record.getPrevBlock() ).putInt( record.getLength() ).putInt( record.getNextBlock() );
-            if ( !record.isLight() )
+            if ( record.inUse() && !record.isLight() )
             {
                 if ( !record.isCharData() )
                 {

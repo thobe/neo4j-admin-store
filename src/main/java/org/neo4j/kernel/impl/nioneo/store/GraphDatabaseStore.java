@@ -165,29 +165,12 @@ public class GraphDatabaseStore
 
     static PropertyType getEnumTypeSafe( int type )
     {
-        switch ( type )
+        try
         {
-        case 1:
-            return PropertyType.INT;
-        case 2:
-            return PropertyType.STRING;
-        case 3:
-            return PropertyType.BOOL;
-        case 4:
-            return PropertyType.DOUBLE;
-        case 5:
-            return PropertyType.FLOAT;
-        case 6:
-            return PropertyType.LONG;
-        case 7:
-            return PropertyType.BYTE;
-        case 8:
-            return PropertyType.CHAR;
-        case 9:
-            return PropertyType.ARRAY;
-        case 10:
-            return PropertyType.SHORT;
-        default:
+            return PropertyType.getPropertyType( type, true );
+        }
+        catch ( InvalidRecordException e )
+        {
             return null;
         }
     }

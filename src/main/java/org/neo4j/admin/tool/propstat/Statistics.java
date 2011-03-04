@@ -17,22 +17,43 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.admin.tool.stringstat;
+package org.neo4j.admin.tool.propstat;
 
-public class AlphaNumericalName extends StringType
+abstract class Statistics
 {
-    @Override
-    boolean matches( String string )
+    static class Simple extends Statistics
     {
-        if ( string.length() > 10 ) return false;
-        for ( char c : string.toCharArray() )
+        private final String name;
+        private long count = 0;
+
+        Simple( String name )
         {
-            if ( c >= '0' && c <= '9' ) continue;
-            if ( c >= 'a' && c <= 'z' ) continue;
-            if ( c >= 'A' && c <= 'Z' ) continue;
-            if ( c == '_' || c == ' ' ) continue;
-            return false;
+            this.name = name;
         }
-        return true;
+
+        @Override
+        void add( long payload )
+        {
+            count++;
+        }
+
+        @Override
+        public String toString()
+        {
+            return name + ": " + count;
+        }
+
+        @Override
+        boolean hasData()
+        {
+            return count != 0;
+        }
     }
+
+    abstract void add( long payload );
+
+    @Override
+    public abstract String toString();
+
+    abstract boolean hasData();
 }

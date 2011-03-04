@@ -17,22 +17,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.admin.tool.stringstat;
+package org.neo4j.admin.tool;
 
-public class AlphaNumericalName extends StringType
+import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
+
+public interface RecordProcessor<R extends AbstractRecord>
 {
-    @Override
-    boolean matches( String string )
-    {
-        if ( string.length() > 10 ) return false;
-        for ( char c : string.toCharArray() )
-        {
-            if ( c >= '0' && c <= '9' ) continue;
-            if ( c >= 'a' && c <= 'z' ) continue;
-            if ( c >= 'A' && c <= 'Z' ) continue;
-            if ( c == '_' || c == ' ' ) continue;
-            return false;
-        }
-        return true;
-    }
+    void process( R record );
 }

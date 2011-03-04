@@ -20,71 +20,45 @@
 
 package org.neo4j.admin.tool.stringstat;
 
+import org.neo4j.admin.tool.SimpleStoreTool;
 import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
 import org.neo4j.kernel.impl.nioneo.store.Filter;
-import org.neo4j.kernel.impl.nioneo.store.GraphDatabaseStore;
 import org.neo4j.kernel.impl.nioneo.store.Record;
 import org.neo4j.kernel.impl.nioneo.store.StringPropertyStoreAccess;
 
-class Main implements Filter<DynamicRecord>
+class Main extends SimpleStoreTool implements Filter<DynamicRecord>
 {
-    @SuppressWarnings( "unchecked" )
-    public static void main( String[] args )
+    Main( String[] args )
     {
-        if ( args.length != 1 )
-        {
-            System.out.println( "USAGE: java -jar " + jar( Main.class ) + " <path to neo4j store dir>" );
-            return;
-        }
-        StringBuilder report = new StringBuilder( "<STRING STORE STATISTICS>\n" );
-        Processor step = new ComputeFrequencies( report );
-        Filter<DynamicRecord> filter = new Main();
+        super( args );
+    }
 
-        GraphDatabaseStore store = new GraphDatabaseStore( args[0] );
-        store.makeStoreOk();
-        try
+    public static void main( String[] args ) throws Throwable
+    {
+        main( Main.class, args );
+    }
+
+    @Override
+    @SuppressWarnings( "unchecked" )
+    protected void run()
+    {
+        StringBuilder report = new StringBuilder( "<STRING STORE STATISTICS>\n" );
+        StringPropertyStoreAccess strings = store.getStringPropertyStore();
+        Processor step = new ComputeFrequencies( strings, report );
+        while ( step != null )
         {
-            StringPropertyStoreAccess strings = store.getStringPropertyStore();
-            long highId = strings.getHighId();
-            while ( step != null )
-            {
-                System.out.printf( "%s for %s string records%n", step, Long.toString( highId ) );
-                int lastPercent = 0;
-                for ( DynamicRecord record : strings.scan( filter ) )
-                {
-                    step.process( strings.toString( record ) );
-                    int permille = (int) ( ( record.getId() * 1000L ) / highId );
-                    if ( permille != lastPercent ) progress( lastPercent = permille );
-                }
-                if ( lastPercent != 1000 ) progress( 1000 );
-                step = step.next();
-            }
-        }
-        finally
-        {
-            store.shutdown();
+            process( step, strings, this );
+            step = step.next();
         }
         System.out.print( report.append( "</STRING STORE STATISTICS>\n" ).toString() );
         System.out.flush();
     }
 
-    private static void progress( int permille )
-    {
-        if ( permille % 100 == 0 )
-            System.out.printf( "%3s%%%n", Integer.toString( permille / 10 ) );
-        else if ( permille % 5 == 0 )
-            System.out.print( "." );
-    }
-
-    private static final int NO_NEXT_BLOCK = Record.NO_NEXT_BLOCK.intValue();
+    private static final int NO_NEXT_BLOCK = Record.NO_NEXT_BLOCK.intValue(),
+            NO_PREV_BLOCK = Record.NO_PREV_BLOCK.intValue();
 
     public boolean accept( DynamicRecord record )
     {
-        return record.inUse() && record.getNextBlock() == NO_NEXT_BLOCK && record.getNextBlock() == NO_NEXT_BLOCK;
-    }
-
-    private static String jar( Class<?> type )
-    {
-        return type.getProtectionDomain().getCodeSource().getLocation().getFile();
+        return record.inUse() && record.getNextBlock() == NO_NEXT_BLOCK && record.getPrevBlock() == NO_PREV_BLOCK;
     }
 }

@@ -19,18 +19,16 @@
  */
 package org.neo4j.admin.tool.stringstat;
 
-public class AlphaNumericalName extends StringType
+public class LowercaseAlpha extends StringType
 {
     @Override
     boolean matches( String string )
     {
-        if ( string.length() > 10 ) return false;
+        if ( string.length() > 12 ) return false;
         for ( char c : string.toCharArray() )
         {
-            if ( c >= '0' && c <= '9' ) continue;
             if ( c >= 'a' && c <= 'z' ) continue;
-            if ( c >= 'A' && c <= 'Z' ) continue;
-            if ( c == '_' || c == ' ' ) continue;
+            if ( c == ' ' || c == '_' || c == '.' || c == '-' || c == ':' || c == '/' ) continue;
             return false;
         }
         return true;

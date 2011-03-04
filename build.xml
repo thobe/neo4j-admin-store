@@ -23,23 +23,34 @@
 <project name="" default="all" basedir=".">
   <property name="target" location="${basedir}/target"/>
   <property name="resources" location="${basedir}/src/main/resources"/>
+  <property name="release" value="1.3.M03"/>
 
   <target name="string property statisics" depends="build">
     <package tool="stringstat"/>
   </target>
 
-  <target name="all" depends="string property statisics"/>
+  <target name="property statisics" depends="build">
+    <package tool="propstat"/>
+  </target>
+
+  <target name="short string converter" depends="build">
+    <package tool="makeshort"/>
+  </target>
+
+  <target name="all" depends="string property statisics,property statisics,short string converter"/>
 
   <macrodef name="package">
     <attribute name="tool"/>
     <sequential>
-      <jar destfile="${target}/@{tool}.jar">
+      <jar destfile="${target}/@{tool}-${release}.jar">
         <fileset dir="${target}/classes"
                  includes="org/neo4j/kernel/impl/nioneo/store/*.class"/>
         <fileset dir="${target}/classes"
+                 includes="org/neo4j/admin/tool/*.class"/>
+        <fileset dir="${target}/classes"
                  includes="org/neo4j/admin/tool/@{tool}/*.class"/>
         <fileset dir="${resources}" includes="**/*"/>
-        <zipfileset src="${target}/dependency/neo4j-kernel-1.2-1.2.jar"
+        <zipfileset src="${target}/dependency/neo4j-kernel-${release}.jar"
                     includes="**/*.class" />
         <manifest>
           <attribute name="Main-Class"

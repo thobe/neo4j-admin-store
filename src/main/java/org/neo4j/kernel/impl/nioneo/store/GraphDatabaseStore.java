@@ -106,6 +106,8 @@ public class GraphDatabaseStore
         nodeStore.makeStoreOk();
         relStore.makeStoreOk();
         propStore.makeStoreOk();
+        stringStore.makeStoreOk();
+        arrayStore.makeStoreOk();
     }
 
     public void shutdown()

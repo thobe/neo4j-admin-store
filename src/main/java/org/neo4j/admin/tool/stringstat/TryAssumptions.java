@@ -19,14 +19,16 @@
  */
 package org.neo4j.admin.tool.stringstat;
 
+import org.neo4j.kernel.impl.nioneo.store.StringPropertyStoreAccess;
+
 class TryAssumptions extends Processor
 {
     private final int[] stats;
     private final StringType[] types;
 
-    TryAssumptions( StringBuilder out, StringType[] types )
+    TryAssumptions( StringPropertyStoreAccess strings, StringBuilder out, StringType[] types )
     {
-        super( out );
+        super( strings, out );
         this.stats = new int[1 << types.length];
         this.types = types;
     }

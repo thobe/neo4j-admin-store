@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.neo4j.kernel.impl.nioneo.store.StringPropertyStoreAccess;
+
 class ComputeFrequencies extends Processor
 {
     private static class Counter
@@ -67,9 +69,9 @@ class ComputeFrequencies extends Processor
     private final Map<Character, Counter> fiveBit = new DefaultMap();
     private final Map<Character, Counter> sixBit = new DefaultMap();
 
-    ComputeFrequencies( StringBuilder out )
+    ComputeFrequencies( StringPropertyStoreAccess strings, StringBuilder out )
     {
-        super( out );
+        super( strings, out );
     }
 
     @Override
@@ -109,7 +111,7 @@ class ComputeFrequencies extends Processor
         StringType[] types = new StringType[builtin.length + assumptions.length];
         System.arraycopy( builtin, 0, types, 0, builtin.length );
         System.arraycopy( assumptions, 0, types, builtin.length, assumptions.length );
-        return new TryAssumptions( out, types );
+        return new TryAssumptions( strings, out, types );
     }
 
     private List<Map.Entry<Character, Counter>> sort( Collection<Map.Entry<Character, Counter>> entries )

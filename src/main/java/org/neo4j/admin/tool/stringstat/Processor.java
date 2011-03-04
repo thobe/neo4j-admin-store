@@ -19,12 +19,18 @@
  */
 package org.neo4j.admin.tool.stringstat;
 
-abstract class Processor
+import org.neo4j.admin.tool.RecordProcessor;
+import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
+import org.neo4j.kernel.impl.nioneo.store.StringPropertyStoreAccess;
+
+abstract class Processor implements RecordProcessor<DynamicRecord>
 {
     final StringBuilder out;
+    final StringPropertyStoreAccess strings;
 
-    Processor( StringBuilder out )
+    Processor( StringPropertyStoreAccess strings, StringBuilder out )
     {
+        this.strings = strings;
         this.out = out;
     }
 
@@ -42,5 +48,11 @@ abstract class Processor
         {
             out.append( String.format( template, params ) );
         }
+    }
+
+    @Override
+    public final void process( DynamicRecord record )
+    {
+        process( strings.toString( record ) );
     }
 }

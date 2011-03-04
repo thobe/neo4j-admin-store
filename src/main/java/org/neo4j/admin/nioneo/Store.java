@@ -89,7 +89,7 @@ public class Store extends NioneoApp
         }
         catch ( RemoteException e )
         {
-            throw new ShellException( e );
+            throw ShellException.wrapCause( e );
         }
         return null;
     }

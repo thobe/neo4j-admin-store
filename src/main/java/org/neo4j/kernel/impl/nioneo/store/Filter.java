@@ -22,4 +22,72 @@ package org.neo4j.kernel.impl.nioneo.store;
 public interface Filter<R extends AbstractRecord>
 {
     boolean accept( R record );
+
+    Filter<AbstractRecord> IN_USE = new Filter<AbstractRecord>()
+    {
+        @Override
+        public boolean accept( AbstractRecord record )
+        {
+            return record.inUse();
+        }
+    };
+
+    interface NodeFilter
+    {
+        boolean acceptNode( NodeRecord record );
+    }
+
+    interface RelationshipFilter
+    {
+        boolean acceptRelationship( RelationshipRecord record );
+    }
+
+    interface PropertyFilter
+    {
+        boolean acceptProperty( PropertyRecord record );
+    }
+
+    class Factory
+    {
+        public static Filter<NodeRecord> nodeFilter( final NodeFilter filter )
+        {
+            return new Filter<NodeRecord>()
+            {
+                @Override
+                public boolean accept( NodeRecord record )
+                {
+                    return filter.acceptNode( record );
+                }
+            };
+        }
+
+        public static Filter<RelationshipRecord> relationshipFilter( final RelationshipFilter filter )
+        {
+            return new Filter<RelationshipRecord>()
+            {
+                @Override
+                public boolean accept( RelationshipRecord record )
+                {
+                    return filter.acceptRelationship( record );
+                }
+            };
+        }
+
+        public static Filter<PropertyRecord> propertyFilter( final PropertyFilter filter )
+        {
+            return new Filter<PropertyRecord>()
+            {
+                @Override
+                public boolean accept( PropertyRecord record )
+                {
+                    return filter.acceptProperty( record );
+                }
+            };
+        }
+
+        private Factory()
+        {
+            // cannot be constructed
+        }
+    }
 }

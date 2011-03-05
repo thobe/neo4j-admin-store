@@ -37,7 +37,11 @@
     <package tool="makeshort"/>
   </target>
 
-  <target name="all" depends="string property statisics,property statisics,short string converter"/>
+  <target name="store graphviz" depends="build">
+    <package tool="graphviz"/>
+  </target>
+
+  <target name="all" depends="string property statisics,property statisics,short string converter,store graphviz"/>
 
   <macrodef name="package">
     <attribute name="tool"/>

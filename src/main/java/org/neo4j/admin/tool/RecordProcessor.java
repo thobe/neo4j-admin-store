@@ -20,8 +20,88 @@
 package org.neo4j.admin.tool;
 
 import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
+import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
+import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
 
 public interface RecordProcessor<R extends AbstractRecord>
 {
     void process( R record );
+
+    interface NodeProcessor
+    {
+        void processNode( NodeRecord record );
+    }
+
+    interface RelationshipProcessor
+    {
+        void processRelationship( RelationshipRecord record );
+    }
+
+    interface PropertyProcessor
+    {
+        void processProperty( PropertyRecord record );
+    }
+
+    class Factory
+    {
+        public static RecordProcessor<NodeRecord> nodeProcessor( final NodeProcessor processor )
+        {
+            return new RecordProcessor<NodeRecord>()
+            {
+                @Override
+                public void process( NodeRecord record )
+                {
+                    processor.processNode( record );
+                }
+
+                @Override
+                public String toString()
+                {
+                    return processor + " for nodes";
+                }
+            };
+        }
+
+        public static RecordProcessor<RelationshipRecord> relationshipProcessor( final RelationshipProcessor processor )
+        {
+            return new RecordProcessor<RelationshipRecord>()
+            {
+                @Override
+                public void process( RelationshipRecord record )
+                {
+                    processor.processRelationship( record );
+                }
+
+                @Override
+                public String toString()
+                {
+                    return processor + " for relationships";
+                }
+            };
+        }
+
+        public static RecordProcessor<PropertyRecord> propertyProcessor( final PropertyProcessor processor )
+        {
+            return new RecordProcessor<PropertyRecord>()
+            {
+                @Override
+                public void process( PropertyRecord record )
+                {
+                    processor.processProperty( record );
+                }
+
+                @Override
+                public String toString()
+                {
+                    return processor + " for properties";
+                }
+            };
+        }
+
+        private Factory()
+        {
+            // cannot be constructed
+        }
+    }
 }

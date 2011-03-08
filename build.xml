@@ -21,9 +21,10 @@
 
 -->
 <project name="" default="all" basedir=".">
+  <xmlproperty file="pom.xml" keepRoot="false" prefix="maven"/>
   <property name="target" location="${basedir}/target"/>
   <property name="resources" location="${basedir}/src/main/resources"/>
-  <property name="release" value="1.3.M03"/>
+  <property name="release" value="${maven.properties.neo4j-version}"/>
 
   <target name="string property statisics" depends="build">
     <package tool="stringstat"/>

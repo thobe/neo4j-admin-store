@@ -20,7 +20,6 @@
 package org.neo4j.admin.nioneo;
 
 import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
-import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
 import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
 import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
 import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;

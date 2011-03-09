@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 
-import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
 import org.neo4j.kernel.impl.nioneo.store.DynamicStoreAccess;
 import org.neo4j.kernel.impl.nioneo.store.GraphDatabaseStore;
 import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;

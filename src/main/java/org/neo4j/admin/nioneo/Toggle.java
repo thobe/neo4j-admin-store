@@ -22,7 +22,6 @@ package org.neo4j.admin.nioneo;
 import java.rmi.RemoteException;
 import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 
-import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;

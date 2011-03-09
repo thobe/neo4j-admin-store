@@ -43,8 +43,8 @@ public class CheckRelChain extends NioneoApp
         NodeRecord nodeRecord = nodeStore.getRecord( nodeId );
         RelationshipStoreAccess relStore = getServer().getRelStore();
         String hit = "No rels found";
-        int nextRelId = nodeRecord.getNextRel();
-        int prevRelId = -1;
+        long nextRelId = nodeRecord.getNextRel();
+        long prevRelId = -1;
         boolean error = false;
         StringBuffer hits = new StringBuffer();
         while ( nextRelId != Record.NO_PREV_RELATIONSHIP.intValue() )

@@ -22,6 +22,7 @@ package org.neo4j.admin.nioneo;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
+import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 
 import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
 import org.neo4j.kernel.impl.nioneo.store.DynamicStoreAccess;
@@ -34,7 +35,7 @@ import org.neo4j.shell.SimpleAppServer;
 
 public class NioneoServer extends SimpleAppServer
 {
-    private AbstractRecord currentRecord;
+    private Abstract64BitRecord currentRecord;
     private final GraphDatabaseStore store;
 
     public NioneoServer( String path ) throws RemoteException
@@ -95,12 +96,12 @@ public class NioneoServer extends SimpleAppServer
         store.shutdown();
     }
 
-    public void setRecord( AbstractRecord record )
+    public void setRecord( Abstract64BitRecord record )
     {
         this.currentRecord = record;
     }
 
-    public AbstractRecord getCurrentRecord()
+    public Abstract64BitRecord getCurrentRecord()
     {
         return this.currentRecord;
     }

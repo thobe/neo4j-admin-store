@@ -19,9 +19,9 @@
  */
 package org.neo4j.admin.tool;
 
-import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
+import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 
-public interface RecordProcessor<R extends AbstractRecord>
+public interface RecordProcessor<R extends Abstract64BitRecord>
 {
     void process( R record );
 }

@@ -44,9 +44,9 @@ public class FixNodeProps extends NioneoApp
         NodeStoreAccess nodeStore = getServer().getNodeStore();
         PropertyStoreAccess propStore = getServer().getPropStore();
         NodeRecord nodeRecord = nodeStore.forceGetRecord( id );
-        int nextProp = nodeRecord.getNextProp();
-        int startProp = nextProp;
-        int prevProp = Record.NO_PREVIOUS_PROPERTY.intValue();
+        long nextProp = nodeRecord.getNextProp();
+        long startProp = nextProp;
+        long prevProp = Record.NO_PREVIOUS_PROPERTY.intValue();
         while ( nextProp != Record.NO_NEXT_PROPERTY.intValue() )
         {
             PropertyRecord propRecord = propStore.forceGetRecord( nextProp );

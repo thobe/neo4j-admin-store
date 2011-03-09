@@ -27,20 +27,36 @@ public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyReco
     }
 
     @Override
-    public PropertyRecord forceGetRecord( int id )
+    public PropertyRecord forceGetRecord( long id )
     {
         PersistenceWindow window = store.acquireWindow( id, OperationType.READ );
         try
         {
             Buffer buffer = window.getOffsettedBuffer( id );
-            boolean inUse = buffer.get() == Record.IN_USE.byteValue() ? true : false;
+
+            // [    ,   x] in use
+            // [xxxx,    ] high prev prop bits
+            long inUseByte = buffer.get();
+
+            boolean inUse = (inUseByte & 0x1) == Record.IN_USE.intValue();
             PropertyRecord record = new PropertyRecord( id );
-            record.setType( GraphDatabaseStore.getEnumTypeSafe( buffer.getInt() ) );
+
+            // [    ,    ][    ,    ][xxxx,xxxx][xxxx,xxxx] type
+            // [    ,    ][    ,xxxx][    ,    ][    ,    ] high next prop bits
+            long typeInt = buffer.getInt();
+
+            record.setType( getEnumType( (int)typeInt & 0xFFFF ) );
             record.setInUse( inUse );
             record.setKeyIndexId( buffer.getInt() );
             record.setPropBlock( buffer.getLong() );
-            record.setPrevProp( buffer.getInt() );
-            record.setNextProp( buffer.getInt() );
+
+            long prevProp = buffer.getUnsignedInt();
+            long prevModifier = (inUseByte & 0xF0L) << 28;
+            long nextProp = buffer.getUnsignedInt();
+            long nextModifier = (typeInt & 0xF0000L) << 16;
+
+            record.setPrevProp( longFromIntAndMod( prevProp, prevModifier ) );
+            record.setNextProp( longFromIntAndMod( nextProp, nextModifier ) );
             return record;
         }
         finally
@@ -54,15 +70,40 @@ public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyReco
         PersistenceWindow window = store.acquireWindow( record.getId(), OperationType.WRITE );
         try
         {
-            int id = record.getId();
+            long id = record.getId();
             Buffer buffer = window.getOffsettedBuffer( id );
-            buffer.put( record.inUse() ? Record.IN_USE.byteValue() : Record.NOT_IN_USE.byteValue() ).putInt(
-                    record.getType().intValue() ).putInt( record.getKeyIndexId() ).putLong( record.getPropBlock() ).putInt(
-                    record.getPrevProp() ).putInt( record.getNextProp() );
+            long prevProp = record.getPrevProp();
+            long prevModifier = prevProp == Record.NO_NEXT_PROPERTY.intValue() ? 0 : (prevProp & 0xF00000000L) >> 28;
+
+            long nextProp = record.getNextProp();
+            long nextModifier = nextProp == Record.NO_NEXT_PROPERTY.intValue() ? 0 : (nextProp & 0xF00000000L) >> 16;
+
+            // [    ,   x] in use
+            // [xxxx,    ] high prev prop bits
+            short inUseUnsignedByte = Record.IN_USE.byteValue();
+            if ( !record.inUse() )
+            {
+                inUseUnsignedByte = 0;
+            }
+            inUseUnsignedByte = (short)(inUseUnsignedByte | prevModifier);
+
+            // [    ,    ][    ,    ][xxxx,xxxx][xxxx,xxxx] type
+            // [    ,    ][    ,xxxx][    ,    ][    ,    ] high next prop bits
+            int typeInt = record.getType().intValue();
+            typeInt |= nextModifier;
+
+            buffer.put( (byte)inUseUnsignedByte ).putInt( typeInt )
+                .putInt( record.getKeyIndexId() ).putLong( record.getPropBlock() )
+                .putInt( (int) prevProp ).putInt( (int) nextProp );
         }
         finally
         {
             store.releaseWindow( window );
         }
+    }
+
+    private PropertyType getEnumType( int type )
+    {
+        return PropertyType.getPropertyType( type, false );
     }
 }

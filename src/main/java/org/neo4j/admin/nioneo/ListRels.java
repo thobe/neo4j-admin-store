@@ -42,8 +42,8 @@ public class ListRels extends NioneoApp
         NodeStoreAccess nodeStore = getServer().getNodeStore();
         NodeRecord nodeRecord = nodeStore.getRecord( nodeId );
         RelationshipStoreAccess relStore = getServer().getRelStore();
-        int nextRelId = nodeRecord.getNextRel();
-        int prevRelId = -1;
+        long nextRelId = nodeRecord.getNextRel();
+        long prevRelId = -1;
         StringBuffer hits = new StringBuffer();
         while ( nextRelId != Record.NO_PREV_RELATIONSHIP.intValue() )
         {

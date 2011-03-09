@@ -39,25 +39,44 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
     }
 
     @Override
-    public DynamicRecord forceGetRecord( int blockId )
+    public DynamicRecord forceGetRecord( long blockId )
     {
         PersistenceWindow window = store.acquireWindow( blockId, OperationType.READ );
         try
         {
             DynamicRecord record = new DynamicRecord( blockId );
             Buffer buffer = window.getOffsettedBuffer( blockId );
-            boolean inUse = buffer.get() == Record.IN_USE.byteValue() ? true : false;
-            record.setInUse( inUse );
-            int prevBlock = buffer.getInt();
-            record.setPrevBlock( prevBlock );
+
+            // [    ,   x] in use
+            // [xxxx,    ] high bits for prev block
+            long inUseByte = buffer.get();
+            boolean inUse = (inUseByte & 0x1) == Record.IN_USE.intValue();
+            long prevBlock = buffer.getUnsignedInt();
+            long prevModifier = (inUseByte & 0xF0L) << 28;
+
             int dataSize = store.getBlockSize() - BLOCK_HEADER_SIZE;
-            int nrOfBytes = buffer.getInt();
-            int nextBlock = buffer.getInt();
-            record.setNextBlock( nextBlock );
-            byte byteArrayElement[] = new byte[dataSize];
-            buffer.get( byteArrayElement );
-            record.setData( byteArrayElement );
+
+            // [    ,    ][xxxx,xxxx][xxxx,xxxx][xxxx,xxxx] number of bytes
+            // [    ,xxxx][    ,    ][    ,    ][    ,    ] higher bits for next block
+            long nrOfBytesInt = buffer.getInt();
+
+            int nrOfBytes = (int)(nrOfBytesInt & 0xFFFFFF);
+
+            long nextBlock = buffer.getUnsignedInt();
+            long nextModifier = (nrOfBytesInt & 0xF000000L) << 8;
+
+            long longNextBlock = longFromIntAndMod( nextBlock, nextModifier );
+            if ( longNextBlock != Record.NO_NEXT_BLOCK.intValue()
+                && nrOfBytes < dataSize || nrOfBytes > dataSize )
+            {
+                throw new InvalidRecordException( "Next block set[" + nextBlock
+                    + "] current block illegal size[" + nrOfBytes + "/" + dataSize
+                    + "]" );
+            }
+            record.setInUse( inUse );
             record.setLength( nrOfBytes );
+            record.setPrevBlock( longFromIntAndMod( prevBlock, prevModifier ) );
+            record.setNextBlock( longNextBlock );
             return record;
         }
         finally
@@ -68,13 +87,36 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
 
     public void forceUpdate( DynamicRecord record )
     {
-        int blockId = record.getId();
+        long blockId = record.getId();
         PersistenceWindow window = store.acquireWindow( blockId, OperationType.WRITE );
         try
         {
             Buffer buffer = window.getOffsettedBuffer( blockId );
-            buffer.put( record.inUse() ? Record.IN_USE.byteValue() : Record.NOT_IN_USE.byteValue() ).putInt(
-                    record.getPrevBlock() ).putInt( record.getLength() ).putInt( record.getNextBlock() );
+
+            long prevProp = record.getPrevBlock();
+            short prevModifier = prevProp == Record.NO_NEXT_BLOCK.intValue() ? 0 : (short)((prevProp & 0xF00000000L) >> 28);
+
+            long nextProp = record.getNextBlock();
+            int nextModifier = nextProp == Record.NO_NEXT_BLOCK.intValue() ? 0 : (int)((nextProp & 0xF00000000L) >> 8);
+
+            // [    ,   x] in use
+            // [xxxx,    ] high prev block bits
+            short inUseUnsignedByte = Record.IN_USE.byteValue();
+            if ( !record.inUse() )
+            {
+                inUseUnsignedByte = 0;
+            }
+            inUseUnsignedByte = (short)( inUseUnsignedByte | prevModifier);
+
+            // [    ,    ][xxxx,xxxx][xxxx,xxxx][xxxx,xxxx] nr of bytes
+            // [    ,xxxx][    ,    ][    ,    ][    ,    ] high next block bits
+            int nrOfBytesInt = record.getLength();
+            nrOfBytesInt |= nextModifier;
+
+            assert record.getId() != record.getPrevBlock();
+            buffer.put( (byte)inUseUnsignedByte ).putInt( (int)prevProp ).putInt( nrOfBytesInt )
+                .putInt( (int)nextProp );
+            
             if ( record.inUse() && !record.isLight() )
             {
                 if ( !record.isCharData() )

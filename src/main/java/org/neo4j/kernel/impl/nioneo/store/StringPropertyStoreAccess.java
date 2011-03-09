@@ -29,7 +29,7 @@ public class StringPropertyStoreAccess extends DynamicStoreAccess<DynamicStringS
     }
 
     @Override
-    public DynamicRecord forceGetRecord( int blockId )
+    public DynamicRecord forceGetRecord( long blockId )
     {
         DynamicRecord record = super.forceGetRecord( blockId );
         record.setType( PropertyType.STRING.intValue() );

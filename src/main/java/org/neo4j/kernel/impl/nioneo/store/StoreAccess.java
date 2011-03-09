@@ -23,7 +23,7 @@ import java.util.Iterator;
 
 import org.neo4j.helpers.collection.PrefetchingIterator;
 
-public abstract class StoreAccess<T extends CommonAbstractStore, R extends AbstractRecord>
+public abstract class StoreAccess<T extends CommonAbstractStore, R extends Object>
 {
     final T store;
 
@@ -42,7 +42,7 @@ public abstract class StoreAccess<T extends CommonAbstractStore, R extends Abstr
         store.rebuildIdGenerators();
     }
 
-    public abstract R forceGetRecord( int id );
+    public abstract R forceGetRecord( long id );
 
     public Iterable<R> scan( final Filter<? super R>... filters )
     {
@@ -72,5 +72,10 @@ public abstract class StoreAccess<T extends CommonAbstractStore, R extends Abstr
                 };
             }
         };
+    }
+
+    protected static long longFromIntAndMod( long base, long modifier )
+    {
+        return CommonAbstractStore.longFromIntAndMod( base, modifier );
     }
 }

@@ -40,7 +40,7 @@ public class FixRels extends NioneoApp
         for ( int i = 0; i < parser.arguments().size(); i++ )
         {
             String arg = parser.arguments().get( i );
-            int id = Integer.parseInt( arg );
+            long id = Long.parseLong( arg );
             RelationshipStoreAccess relStore = getServer().getRelStore();
             RelationshipRecord relRecord = relStore.forceGetRecord( id );
             if ( relRecord.inUse() )
@@ -68,13 +68,13 @@ public class FixRels extends NioneoApp
         return null;
     }
 
-    private int getLastRel( int nodeId )
+    private long getLastRel( long nodeId )
     {
         NodeStoreAccess nodeStore = getServer().getNodeStore();
         NodeRecord nodeRecord = nodeStore.getRecord( nodeId );
         RelationshipStoreAccess relStore = getServer().getRelStore();
-        int nextRelId = nodeRecord.getNextRel();
-        int prevRelId = -1;
+        long nextRelId = nodeRecord.getNextRel();
+        long prevRelId = -1;
         while ( nextRelId != Record.NO_PREV_RELATIONSHIP.intValue() )
         {
             RelationshipRecord record = relStore.forceGetRecord( nextRelId );

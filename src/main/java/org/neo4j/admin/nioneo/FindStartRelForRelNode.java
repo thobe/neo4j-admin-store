@@ -40,8 +40,8 @@ public class FindStartRelForRelNode extends NioneoApp
         int nodeId = Integer.parseInt( parser.arguments().get( 1 ) );
         RelationshipStoreAccess relStore = getServer().getRelStore();
         String hit = "Not found";
-        int nextRelId = relId;
-        int prevRelId = -1;
+        long nextRelId = relId;
+        long prevRelId = -1;
         boolean error = false;
         do
         {

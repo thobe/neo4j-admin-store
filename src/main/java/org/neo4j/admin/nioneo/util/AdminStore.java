@@ -190,7 +190,7 @@ public class AdminStore
                 {
                     indexesFound.add( index );
                 }
-                int nextProp = record.getNextProp();
+                long nextProp = record.getNextProp();
                 if ( nextProp != Record.NO_NEXT_PROPERTY.intValue() )
                 {
                     record = propStore.getLightRecord( nextProp );
@@ -291,7 +291,7 @@ public class AdminStore
                         record.setInUse( false );
                         typeNameStore.updateRecord( record );
                     }
-                    int nextId = typeNameStore.nextBlockId();
+                    int nextId = (int) typeNameStore.nextBlockId();
                     char[] chars = new char[name.length()];
                     name.getChars( 0, name.length(), chars, 0 );
                     records = typeNameStore.allocateRecords( nextId, chars );
@@ -328,9 +328,9 @@ public class AdminStore
     }
 
     private static String getStringFor( Collection<DynamicRecord> recordsCol,
-        int startBlock )
+        long startBlock )
     {
-        int recordToFind = startBlock;
+        long recordToFind = startBlock;
         Iterator<DynamicRecord> records = recordsCol.iterator();
         List<char[]> charList = new LinkedList<char[]>();
         int totalSize = 0;
@@ -366,9 +366,9 @@ public class AdminStore
     }
 
     private static String getOldStringFor(
-        Collection<DynamicRecord> recordsCol, int startBlock )
+        Collection<DynamicRecord> recordsCol, long startBlock )
     {
-        int recordToFind = startBlock;
+        long recordToFind = startBlock;
         Iterator<DynamicRecord> records = recordsCol.iterator();
         List<byte[]> byteList = new LinkedList<byte[]>();
         int totalSize = 0;

@@ -49,7 +49,7 @@ public class Load extends NioneoApp
             throws ShellException
     {
         String arg = parser.arguments().get( 0 );
-        int id = Integer.parseInt( arg );
+        long id = Long.parseLong( arg );
         String response = "Record " + id + " loaded";
         if ( parser.options().containsKey( "n" ) )
         {

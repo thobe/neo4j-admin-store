@@ -45,7 +45,7 @@ public class CheckAllRelChains extends NioneoApp
         RelationshipStoreAccess relStore = getServer().getRelStore();
         NodeStoreAccess nodeStore = getServer().getNodeStore();
         int maxNodeId = (int) nodeStore.getHighId();
-        Set<Integer> chainedRels = new HashSet<Integer>();
+        Set<Long> chainedRels = new HashSet<Long>();
         for ( int i = 0; i < maxNodeId; i++ )
         {
             NodeRecord nodeRecord = nodeStore.forceGetRecord( i );
@@ -53,8 +53,8 @@ public class CheckAllRelChains extends NioneoApp
             {
                 continue;
             }
-            int nextRelId = nodeRecord.getNextRel();
-            int prevRelId = -1;
+            long nextRelId = nodeRecord.getNextRel();
+            long prevRelId = -1;
             while ( nextRelId != Record.NO_PREV_RELATIONSHIP.intValue() )
             {
                 RelationshipRecord record = relStore.forceGetRecord( nextRelId );

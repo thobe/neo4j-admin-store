@@ -27,7 +27,7 @@ public class ArrayPropertyStoreAccess extends DynamicStoreAccess<DynamicArraySto
     }
 
     @Override
-    public DynamicRecord forceGetRecord( int blockId )
+    public DynamicRecord forceGetRecord( long blockId )
     {
         DynamicRecord record = super.forceGetRecord( blockId );
         record.setType( PropertyType.ARRAY.intValue() );

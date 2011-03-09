@@ -26,28 +26,67 @@ public class RelationshipStoreAccess extends StoreAccess<RelationshipStore, Rela
         super( store );
     }
 
-    public RelationshipRecord getRecord( int id )
+    public RelationshipRecord getRecord( long id )
     {
         return store.getRecord( id );
     }
 
     @Override
-    public RelationshipRecord forceGetRecord( int id )
+    public RelationshipRecord forceGetRecord( long id )
     {
         PersistenceWindow window = store.acquireWindow( id, OperationType.READ );
         try
         {
-            Buffer buffer = window.getOffsettedBuffer( id );
-            byte inUse = buffer.get();
-            boolean inUseFlag = ( ( inUse & Record.IN_USE.byteValue() ) == Record.IN_USE.byteValue() );
-            RelationshipRecord record = new RelationshipRecord( id, buffer.getInt(), buffer.getInt(), buffer.getInt() );
-            record.setInUse( inUseFlag );
-            record.setFirstPrevRel( buffer.getInt() );
-            record.setFirstNextRel( buffer.getInt() );
-            record.setSecondPrevRel( buffer.getInt() );
-            record.setSecondNextRel( buffer.getInt() );
-            record.setNextProp( buffer.getInt() );
-            return record;
+        Buffer buffer = window.getOffsettedBuffer( id );
+
+        // [    ,   x] in use flag
+        // [    ,xxx ] first node high order bits
+        // [xxxx,    ] next prop high order bits
+        long inUseByte = buffer.get();
+
+        boolean inUse = (inUseByte & 0x1) == Record.IN_USE.intValue();
+
+        long firstNode = buffer.getUnsignedInt();
+        long firstNodeMod = (inUseByte & 0xEL) << 31;
+
+        long secondNode = buffer.getUnsignedInt();
+
+        // [ xxx,    ][    ,    ][    ,    ][    ,    ] second node high order bits,     0x70000000
+        // [    ,xxx ][    ,    ][    ,    ][    ,    ] first prev rel high order bits,  0xE000000
+        // [    ,   x][xx  ,    ][    ,    ][    ,    ] first next rel high order bits,  0x1C00000
+        // [    ,    ][  xx,x   ][    ,    ][    ,    ] second prev rel high order bits, 0x380000
+        // [    ,    ][    , xxx][    ,    ][    ,    ] second next rel high order bits, 0x70000
+        // [    ,    ][    ,    ][xxxx,xxxx][xxxx,xxxx] type
+        long typeInt = buffer.getInt();
+        long secondNodeMod = (typeInt & 0x70000000L) << 4;
+        int type = (int)(typeInt & 0xFFFF);
+
+        RelationshipRecord record = new RelationshipRecord( id,
+            longFromIntAndMod( firstNode, firstNodeMod ),
+            longFromIntAndMod( secondNode, secondNodeMod ), type );
+        record.setInUse( inUse );
+
+        long firstPrevRel = buffer.getUnsignedInt();
+        long firstPrevRelMod = (typeInt & 0xE000000L) << 7;
+        record.setFirstPrevRel( longFromIntAndMod( firstPrevRel, firstPrevRelMod ) );
+
+        long firstNextRel = buffer.getUnsignedInt();
+        long firstNextRelMod = (typeInt & 0x1C00000L) << 10;
+        record.setFirstNextRel( longFromIntAndMod( firstNextRel, firstNextRelMod ) );
+
+        long secondPrevRel = buffer.getUnsignedInt();
+        long secondPrevRelMod = (typeInt & 0x380000L) << 13;
+        record.setSecondPrevRel( longFromIntAndMod( secondPrevRel, secondPrevRelMod ) );
+
+        long secondNextRel = buffer.getUnsignedInt();
+        long secondNextRelMod = (typeInt & 0x70000L) << 16;
+        record.setSecondNextRel( longFromIntAndMod( secondNextRel, secondNextRelMod ) );
+
+        long nextProp = buffer.getUnsignedInt();
+        long nextPropMod = (inUseByte & 0xF0L) << 28;
+
+        record.setNextProp( longFromIntAndMod( nextProp, nextPropMod ) );
+        return record;
         }
         finally
         {
@@ -60,12 +99,51 @@ public class RelationshipStoreAccess extends StoreAccess<RelationshipStore, Rela
         PersistenceWindow window = store.acquireWindow( record.getId(), OperationType.WRITE );
         try
         {
-            int id = record.getId();
-            Buffer buffer = window.getOffsettedBuffer( id );
-            byte inUse = record.inUse() ? Record.IN_USE.byteValue() : Record.NOT_IN_USE.byteValue();
-            buffer.put( inUse ).putInt( record.getFirstNode() ).putInt( record.getSecondNode() ).putInt(
-                    record.getType() ).putInt( record.getFirstPrevRel() ).putInt( record.getFirstNextRel() ).putInt(
-                    record.getSecondPrevRel() ).putInt( record.getSecondNextRel() ).putInt( record.getNextProp() );
+        long id = record.getId();
+        Buffer buffer = window.getOffsettedBuffer( id );
+        long firstNode = record.getFirstNode();
+        short firstNodeMod = (short)((firstNode & 0x700000000L) >> 31);
+
+        long secondNode = record.getSecondNode();
+        long secondNodeMod = (secondNode & 0x700000000L) >> 4;
+
+        long firstPrevRel = record.getFirstPrevRel();
+        long firstPrevRelMod = firstPrevRel == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (firstPrevRel & 0x700000000L) >> 7;
+
+        long firstNextRel = record.getFirstNextRel();
+        long firstNextRelMod = firstNextRel == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (firstNextRel & 0x700000000L) >> 10;
+
+        long secondPrevRel = record.getSecondPrevRel();
+        long secondPrevRelMod = secondPrevRel == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (secondPrevRel & 0x700000000L) >> 13;
+
+        long secondNextRel = record.getSecondNextRel();
+        long secondNextRelMod = secondNextRel == Record.NO_NEXT_RELATIONSHIP.intValue() ? 0 : (secondNextRel & 0x700000000L) >> 16;
+
+        long nextProp = record.getNextProp();
+        long nextPropMod = nextProp == Record.NO_NEXT_PROPERTY.intValue() ? 0 : (nextProp & 0xF00000000L) >> 28;
+
+        // [    ,   x] in use flag
+        // [    ,xxx ] first node high order bits
+        // [xxxx,    ] next prop high order bits
+        short inUseUnsignedByte = Record.IN_USE.byteValue();
+        if ( !record.inUse() )
+        {
+            inUseUnsignedByte = 0;
+        }
+        inUseUnsignedByte = (short)(inUseUnsignedByte | firstNodeMod | nextPropMod);
+
+        // [ xxx,    ][    ,    ][    ,    ][    ,    ] second node high order bits,     0x70000000
+        // [    ,xxx ][    ,    ][    ,    ][    ,    ] first prev rel high order bits,  0xE000000
+        // [    ,   x][xx  ,    ][    ,    ][    ,    ] first next rel high order bits,  0x1C00000
+        // [    ,    ][  xx,x   ][    ,    ][    ,    ] second prev rel high order bits, 0x380000
+        // [    ,    ][    , xxx][    ,    ][    ,    ] second next rel high order bits, 0x70000
+        // [    ,    ][    ,    ][xxxx,xxxx][xxxx,xxxx] type
+        int typeInt = (int)(record.getType() | secondNodeMod | firstPrevRelMod | firstNextRelMod | secondPrevRelMod | secondNextRelMod);
+
+        buffer.put( (byte)inUseUnsignedByte ).putInt( (int) firstNode ).putInt( (int) secondNode )
+            .putInt( typeInt ).putInt( (int) firstPrevRel ).putInt( (int) firstNextRel )
+            .putInt( (int) secondPrevRel ).putInt( (int) secondNextRel ).putInt( (int) nextProp );
+
         }
         finally
         {

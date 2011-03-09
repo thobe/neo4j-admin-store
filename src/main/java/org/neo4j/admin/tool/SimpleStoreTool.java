@@ -22,7 +22,7 @@ package org.neo4j.admin.tool;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
+import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 import org.neo4j.kernel.impl.nioneo.store.CommonAbstractStore;
 import org.neo4j.kernel.impl.nioneo.store.Filter;
 import org.neo4j.kernel.impl.nioneo.store.GraphDatabaseStore;
@@ -102,7 +102,7 @@ public abstract class SimpleStoreTool
         store.shutdown();
     }
 
-    protected static <T extends CommonAbstractStore, R extends AbstractRecord> void process(
+    protected static <T extends CommonAbstractStore, R extends Abstract64BitRecord> void process(
             RecordProcessor<R> processor, StoreAccess<T, R> store, Filter<? super R>... filters )
     {
         long highId = store.getHighId();

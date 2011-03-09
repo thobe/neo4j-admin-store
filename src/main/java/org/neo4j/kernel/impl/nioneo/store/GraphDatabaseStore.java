@@ -83,6 +83,7 @@ public class GraphDatabaseStore
     public GraphDatabaseStore( String path, Map<Object, Object> params )
     {
         this.path = path;
+        params.put( FileSystemAbstraction.class,CommonFactories.defaultFileSystemAbstraction() );
         this.nodeStore = new NodeStore( path + "/neostore.nodestore.db", params );
         this.relStore = new RelationshipStore( path + "/neostore.relationshipstore.db", params );
         this.propStore = new PropertyStore( path + "/neostore.propertystore.db", params );

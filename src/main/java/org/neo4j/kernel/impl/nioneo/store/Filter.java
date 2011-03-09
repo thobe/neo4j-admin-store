@@ -19,7 +19,7 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
-public interface Filter<R extends AbstractRecord>
+public interface Filter<R extends Object>
 {
     boolean accept( R record );
 }

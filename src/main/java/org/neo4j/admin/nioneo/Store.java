@@ -20,6 +20,7 @@
 package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
+import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 
 import org.neo4j.kernel.impl.nioneo.store.AbstractRecord;
 import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
@@ -38,7 +39,7 @@ public class Store extends NioneoApp
     public String execute( AppCommandParser parser, Session session, Output out )
             throws ShellException
     {
-        AbstractRecord record = getServer().getCurrentRecord();
+        Abstract64BitRecord record = getServer().getCurrentRecord();
         String response;
         if ( record == null )
         {

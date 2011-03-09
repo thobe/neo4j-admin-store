@@ -41,7 +41,7 @@ public class DumpPrevChainForRelNode extends NioneoApp
         RelationshipStoreAccess relStore = getServer().getRelStore();
         String hit = "Not found";
         StringBuffer hits = new StringBuffer();
-        int prevRelId = relId;
+        long prevRelId = relId;
         do
         {
             RelationshipRecord record = relStore.getRecord( prevRelId );

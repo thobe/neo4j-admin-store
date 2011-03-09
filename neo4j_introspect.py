@@ -8,7 +8,7 @@ done
 
 pushd $(dirname $PY) > /dev/null
 
-if ! mvn package dependency:copy-dependencies -DskipTests=true > /dev/null
+if ! mvn package dependency:copy-dependencies -DskipTests > /dev/null
 then
     echo BUILD ERRORS
     exit $!

@@ -23,7 +23,7 @@ import java.util.Iterator;
 
 import org.neo4j.helpers.collection.PrefetchingIterator;
 
-public abstract class StoreAccess<T extends CommonAbstractStore, R extends Object>
+public abstract class StoreAccess<T extends CommonAbstractStore, R extends Abstract64BitRecord>
 {
     final T store;
 

@@ -20,29 +20,18 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<project name="" default="all" basedir=".">
+<project name="" default="tools" basedir=".">
   <xmlproperty file="pom.xml" keepRoot="false" prefix="maven"/>
   <property name="target" location="${basedir}/target"/>
   <property name="resources" location="${basedir}/src/main/resources"/>
   <property name="release" value="${maven.properties.neo4j-version}"/>
 
-  <target name="string property statisics" depends="build">
+  <target name="tools" depends="build">
     <package tool="stringstat"/>
-  </target>
-
-  <target name="property statisics" depends="build">
     <package tool="propstat"/>
-  </target>
-
-  <target name="short string converter" depends="build">
     <package tool="makeshort"/>
-  </target>
-
-  <target name="store graphviz" depends="build">
     <package tool="graphviz"/>
   </target>
-
-  <target name="all" depends="string property statisics,property statisics,short string converter,store graphviz"/>
 
   <macrodef name="package">
     <attribute name="tool"/>

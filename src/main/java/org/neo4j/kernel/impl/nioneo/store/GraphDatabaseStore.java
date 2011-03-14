@@ -19,6 +19,7 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,11 +29,17 @@ import org.neo4j.kernel.IdGeneratorFactory;
 
 public class GraphDatabaseStore
 {
+    static final long NO_NEXT_REL = Record.NO_NEXT_RELATIONSHIP.intValue(),
+            NO_PREV_REL = Record.NO_PREV_RELATIONSHIP.intValue();
+    static final long NO_NEXT_PROP = Record.NO_NEXT_PROPERTY.intValue(),
+            NO_PREV_PROP = Record.NO_PREVIOUS_PROPERTY.intValue();
+    static final long NO_NEXT_BLOCK = Record.NO_NEXT_BLOCK.intValue(), NO_PREV_BLOCK = Record.NO_PREV_BLOCK.intValue();
+
     private static final Field STRING_PROPERTY_STORE, ARRAY_PROPERTY_STORE;
     static
     {
         // FIXME: this should not use reflection,
-        // refactor GraphDatabaseStore to allow access to these fields
+        // refactor PropertyStore to allow access to these fields
         STRING_PROPERTY_STORE = field( PropertyStore.class, "stringPropertyStore" );
         ARRAY_PROPERTY_STORE = field( PropertyStore.class, "arrayPropertyStore" );
     }
@@ -83,12 +90,21 @@ public class GraphDatabaseStore
     public GraphDatabaseStore( String path, Map<Object, Object> params )
     {
         this.path = path;
-        params.put( FileSystemAbstraction.class,CommonFactories.defaultFileSystemAbstraction() );
+        params.put( FileSystemAbstraction.class, CommonFactories.defaultFileSystemAbstraction() );
         this.nodeStore = new NodeStore( path + "/neostore.nodestore.db", params );
         this.relStore = new RelationshipStore( path + "/neostore.relationshipstore.db", params );
-        this.propStore = new PropertyStore( path + "/neostore.propertystore.db", params );
-        this.stringStore = (DynamicStringStore) get( propStore, STRING_PROPERTY_STORE );
-        this.arrayStore = (DynamicArrayStore) get( propStore, ARRAY_PROPERTY_STORE );
+        if ( new File( path + "/neostore.propertystore.db" ).exists() )
+        {
+            this.propStore = new PropertyStore( path + "/neostore.propertystore.db", params );
+            this.stringStore = (DynamicStringStore) get( propStore, STRING_PROPERTY_STORE );
+            this.arrayStore = (DynamicArrayStore) get( propStore, ARRAY_PROPERTY_STORE );
+        }
+        else
+        {
+            this.propStore = null;
+            this.stringStore = null;
+            this.arrayStore = null;
+        }
     }
 
     @Override
@@ -106,16 +122,19 @@ public class GraphDatabaseStore
     {
         nodeStore.makeStoreOk();
         relStore.makeStoreOk();
-        propStore.makeStoreOk();
-        stringStore.makeStoreOk();
-        arrayStore.makeStoreOk();
+        if ( propStore != null )
+        {
+            propStore.makeStoreOk();
+            stringStore.makeStoreOk();
+            arrayStore.makeStoreOk();
+        }
     }
 
     public void shutdown()
     {
         nodeStore.close();
         relStore.close();
-        propStore.close();
+        if ( propStore != null ) propStore.close();
     }
 
     private static Map<Object, Object> defaultParams()
@@ -151,28 +170,16 @@ public class GraphDatabaseStore
 
     public PropertyStoreAccess getPropStore()
     {
-        return new PropertyStoreAccess( propStore );
+        return propStore == null ? null : new PropertyStoreAccess( propStore );
     }
 
     public StringPropertyStoreAccess getStringPropertyStore()
     {
-        return new StringPropertyStoreAccess( stringStore );
+        return stringStore == null ? null : new StringPropertyStoreAccess( stringStore );
     }
 
     public ArrayPropertyStoreAccess getArrayPropertyStore()
     {
-        return new ArrayPropertyStoreAccess( arrayStore );
-    }
-
-    static PropertyType getEnumTypeSafe( int type )
-    {
-        try
-        {
-            return PropertyType.getPropertyType( type, true );
-        }
-        catch ( InvalidRecordException e )
-        {
-            return null;
-        }
+        return arrayStore == null ? null : new ArrayPropertyStoreAccess( arrayStore );
     }
 }

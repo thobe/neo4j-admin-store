@@ -41,7 +41,7 @@ public abstract class SimpleStoreTool
         this.store = new GraphDatabaseStore( args[0] );
     }
 
-    public static <SST extends SimpleStoreTool> void main( Class<SST> main, String[] args ) throws Throwable
+    public static <SST extends SimpleStoreTool> void main( Class<SST> main, String... args ) throws Throwable
     {
         final Constructor<SST> init;
         try

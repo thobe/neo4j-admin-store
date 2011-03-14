@@ -24,6 +24,11 @@ jython $PY "$@"
 from __future__ import with_statement
 
 from org.neo4j.kernel.impl.nioneo.store import GraphDatabaseStore
+from org.neo4j.admin.check import RecordInconsistency
+
+def consistencyCheck(self):
+    return RecordInconsistency.check(self)
+GraphDatabaseStore.check = consistencyCheck
 
 __utils = {}
 def util(func):
@@ -31,7 +36,7 @@ def util(func):
     return func
 
 @util
-def relationships(store, node, rel=None):
+def relationships(store, node, rel=None,reverse=False):
     """get all relationships linked to a node"""
     if isinstance(node, int):
         node = store.nodeStore.forceGetRecord(node)
@@ -46,22 +51,17 @@ def relationships(store, node, rel=None):
         rel = store.relStore.forceGetRecord(_rel)
         yield rel
         if rel.firstNode == _node:
-            _rel = rel.firstNextRel
+            if reverse:
+                _rel = rel.firstPrevRel
+            else:
+                _rel = rel.firstNextRel
         elif rel.secondNode == _node:
-            _rel = rel.secondNextRel
+            if reverse:
+                _rel = rel.secondPrevRel
+            else:
+                _rel = rel.secondNextRel
         else:
             raise ValueError
-
-@util
-def scan(store, *filters):
-    """Scan a store for records that match all supplied filters"""
-    get = store.forceGetRecord
-    for i in xrange(store.highId):#XXX: should this be highId+1?
-        item = get(i)
-        for f in filters:
-            if not f(item): break
-        else:
-            yield item
 
 @util
 def used(item):

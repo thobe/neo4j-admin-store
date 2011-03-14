@@ -21,6 +21,9 @@ package org.neo4j.kernel.impl.nioneo.store;
 
 public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyRecord>
 {
+    public static final long NO_NEXT_RECORD = GraphDatabaseStore.NO_NEXT_PROP,
+            NO_PREV_RECORD = GraphDatabaseStore.NO_PREV_PROP;
+
     PropertyStoreAccess( PropertyStore store )
     {
         super( store );
@@ -104,6 +107,16 @@ public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyReco
 
     private PropertyType getEnumType( int type )
     {
-        return PropertyType.getPropertyType( type, false );
+        PropertyType result;
+        try
+        {
+            result = PropertyType.getPropertyType( type, true );
+            if ( result == null ) result = PropertyType.ILLEGAL;
+        }
+        catch ( InvalidRecordException ex )
+        {
+            result = null;
+        }
+        return result;
     }
 }

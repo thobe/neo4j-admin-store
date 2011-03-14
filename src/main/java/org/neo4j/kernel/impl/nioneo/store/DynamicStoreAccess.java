@@ -22,6 +22,8 @@ package org.neo4j.kernel.impl.nioneo.store;
 @SuppressWarnings( "boxing" )
 public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends StoreAccess<T, DynamicRecord>
 {
+    public static final long NO_NEXT_RECORD = GraphDatabaseStore.NO_NEXT_BLOCK,
+            NO_PREV_RECORD = GraphDatabaseStore.NO_PREV_BLOCK;
     private static final int BLOCK_HEADER_SIZE;
     static
     {
@@ -66,13 +68,6 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
             long nextModifier = (nrOfBytesInt & 0xF000000L) << 8;
 
             long longNextBlock = longFromIntAndMod( nextBlock, nextModifier );
-            if ( longNextBlock != Record.NO_NEXT_BLOCK.intValue()
-                && nrOfBytes < dataSize || nrOfBytes > dataSize )
-            {
-                throw new InvalidRecordException( "Next block set[" + nextBlock
-                    + "] current block illegal size[" + nrOfBytes + "/" + dataSize
-                    + "]" );
-            }
             record.setInUse( inUse );
             record.setLength( nrOfBytes );
             record.setPrevBlock( longFromIntAndMod( prevBlock, prevModifier ) );
@@ -116,7 +111,7 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
             assert record.getId() != record.getPrevBlock();
             buffer.put( (byte)inUseUnsignedByte ).putInt( (int)prevProp ).putInt( nrOfBytesInt )
                 .putInt( (int)nextProp );
-            
+
             if ( record.inUse() && !record.isLight() )
             {
                 if ( !record.isCharData() )

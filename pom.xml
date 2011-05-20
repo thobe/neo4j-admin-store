@@ -9,7 +9,7 @@
   </parent>
   
   <properties>
-    <neo4j-version>1.3-SNAPSHOT</neo4j-version>
+    <neo4j-version>1.4-SNAPSHOT</neo4j-version>
     <bundle.namespace>org.neo4j.admin</bundle.namespace>
   </properties>
 

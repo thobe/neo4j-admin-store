@@ -24,7 +24,7 @@
   <xmlproperty file="pom.xml" keepRoot="false" prefix="maven"/>
   <property name="target" location="${basedir}/target"/>
   <property name="resources" location="${basedir}/src/main/resources"/>
-  <property name="release" value="${maven.properties.neo4j-version}"/>
+  <property name="neo4j-version" value="${maven.properties.neo4j-version}"/>
 
   <target name="tools" depends="build">
     <package tool="stringstat"/>
@@ -37,7 +37,7 @@
   <macrodef name="package">
     <attribute name="tool"/>
     <sequential>
-      <jar destfile="${target}/@{tool}-${release}.jar">
+      <jar destfile="${target}/@{tool}-${neo4j-version}.jar">
         <fileset dir="${target}/classes"
                  includes="org/neo4j/kernel/impl/nioneo/store/*.class"/>
         <fileset dir="${target}/classes"
@@ -47,7 +47,7 @@
         <fileset dir="${target}/classes"
                  includes="org/neo4j/admin/tool/@{tool}/*.class"/>
         <fileset dir="${resources}" includes="**/*"/>
-        <zipfileset src="${target}/dependency/neo4j-kernel-${release}.jar"
+        <zipfileset src="${target}/dependency/neo4j-kernel-${neo4j-version}.jar"
                     includes="**/*.class" />
         <manifest>
           <attribute name="Main-Class"
@@ -62,6 +62,7 @@
       <arg value="clean"/>
       <arg value="compile"/>
       <arg value="dependency:copy-dependencies"/>
+      <arg value="-Dneo4j-version=${neo4j-version}"/>
     </exec>
   </target>
 </project>

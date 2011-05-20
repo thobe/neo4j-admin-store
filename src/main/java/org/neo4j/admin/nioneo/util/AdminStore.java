@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.neo4j.helpers.UTF8;
 import org.neo4j.kernel.impl.nioneo.store.AbstractDynamicStore;
 import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
 import org.neo4j.kernel.impl.nioneo.store.NeoStore;
@@ -403,7 +404,7 @@ public class AdminStore
             System.arraycopy( bytes, 0, allBytes, position, bytes.length );
             position += bytes.length;
         }
-        return new String( allBytes );
+        return UTF8.decode( allBytes );
     }
 
     public static void fsckStore( String fileName ) throws IOException

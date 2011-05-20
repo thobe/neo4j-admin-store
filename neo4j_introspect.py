@@ -23,6 +23,8 @@ jython $PY "$@"
 "exit"""
 from __future__ import with_statement
 
+import sys
+
 from org.neo4j.kernel.impl.nioneo.store import GraphDatabaseStore
 from org.neo4j.admin.check import RecordInconsistency
 
@@ -62,6 +64,42 @@ def relationships(store, node, rel=None,reverse=False):
                 _rel = rel.secondNextRel
         else:
             raise ValueError
+
+@util
+def vizhood(store, start, file=None):
+    def printRelationLink(label, relationId):
+        if (relationId != -1):
+          file.write('  %s -> %s [label=%s]\n'
+                       % (rel.id, relationId, label))
+    def node(nodeId):
+        if nodeId not in nodes:
+            file.write('  node%s [shape=ellipse; label=%s]\n' % (nodeId,nodeId))
+            nodes.add(nodeId)
+            node = store.nodeStore.forceGetRecord(nodeId)
+            file.write('  node%s -> %s\n' % (nodeId,node.nextRel))
+        return 'node%s' % nodeId
+    close = False
+    if file is None:
+        file = sys.stdout
+    elif isinstance(file, str):
+        file = open(file,'w')
+        close = True
+    try:
+        file.write('digraph NodeNeighborhood {\n')
+        file.write('  node [shape=box]\n')
+        nodes = set()
+        for rel in relationships(store, start):
+            file.write('  %s -> %s [label=first]\n'
+                       % (rel.id, node(rel.firstNode)))
+            file.write('  %s -> %s [label=second]\n'
+                       % (rel.id, node(rel.secondNode)))
+            printRelationLink('firstPrev', rel.firstPrevRel)
+            printRelationLink('firstNext', rel.firstNextRel)
+            printRelationLink('secondPrev', rel.secondPrevRel)
+            printRelationLink('secondNext', rel.secondNextRel)
+        file.write('}\n')
+    finally:
+        if close: file.close()
 
 @util
 def used(item):
@@ -117,7 +155,6 @@ def __main__(path=".",script=None):
             store.shutdown()
 
 if __name__ == '__main__':
-    import sys
     try:
         __main__(*sys.argv[1:])
     except:

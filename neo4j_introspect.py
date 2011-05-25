@@ -26,6 +26,7 @@ from __future__ import with_statement
 import sys
 
 from org.neo4j.kernel.impl.nioneo.store import GraphDatabaseStore
+from org.neo4j.kernel.impl.nioneo.xa import LogicalLogStore
 from org.neo4j.admin.check import RecordInconsistency
 
 def consistencyCheck(self):
@@ -129,17 +130,21 @@ def printAll(it, *attrs):
 
 del util
 
-def __main__(path=".",script=None):
+def __main__(path=".", script=None, **flags):
     if not script:
         import os
         if os.path.isfile(path):
             path, script = ".", path
     env = dict(__utils)
-    store = GraphDatabaseStore(path)
-    env['store'] = store
+    if flags.get('log',False):
+        store = LogicalLogStore(path)
+        env['logs'] = store
+    else:
+        store = GraphDatabaseStore(path)
+        env['store'] = store
     if script:
         with open(script) as script:
-            store.makeStoreOk()
+            store.initialize()
             try:
                 exec(script.read(), env)
             finally:
@@ -147,7 +152,7 @@ def __main__(path=".",script=None):
     else:
         from code import InteractiveConsole
         console = InteractiveConsole(locals=env)
-        store.makeStoreOk()
+        store.initialize()
         try:
             console.interact(
                 banner="Neo4j Store introspection console (Python)")
@@ -155,8 +160,16 @@ def __main__(path=".",script=None):
             store.shutdown()
 
 if __name__ == '__main__':
+    flags = {}
+    args = []
+    for arg in sys.argv[1:]:
+        if args or not arg.startswith('--'):
+            args.append(arg)
+            continue
+        else:
+            flags[arg[2:]] = True
     try:
-        __main__(*sys.argv[1:])
+        __main__(*args, **flags)
     except:
         import traceback; traceback.print_exc()
         print "USAGE:", sys.argv[0], "[<graphdb path>]"

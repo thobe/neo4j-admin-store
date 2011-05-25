@@ -26,8 +26,9 @@ import java.util.Map;
 
 import org.neo4j.kernel.CommonFactories;
 import org.neo4j.kernel.IdGeneratorFactory;
+import org.neo4j.kernel.impl.nioneo.xa.LogicalLogStore;
 
-public class GraphDatabaseStore
+public class GraphDatabaseStore extends LogicalLogStore
 {
     static final long NO_NEXT_REL = Record.NO_NEXT_RELATIONSHIP.intValue(),
             NO_PREV_REL = Record.NO_PREV_RELATIONSHIP.intValue();
@@ -48,7 +49,6 @@ public class GraphDatabaseStore
     private final PropertyStore propStore;
     private final DynamicStringStore stringStore;
     private final DynamicArrayStore arrayStore;
-    private final String path;
 
     public GraphDatabaseStore( String path )
     {
@@ -89,7 +89,7 @@ public class GraphDatabaseStore
 
     public GraphDatabaseStore( String path, Map<Object, Object> params )
     {
-        this.path = path;
+        super( path );
         params.put( FileSystemAbstraction.class, CommonFactories.defaultFileSystemAbstraction() );
         this.nodeStore = new NodeStore( path + "/neostore.nodestore.db", params );
         this.relStore = new RelationshipStore( path + "/neostore.relationshipstore.db", params );
@@ -108,14 +108,9 @@ public class GraphDatabaseStore
     }
 
     @Override
-    public String toString()
+    public void initialize()
     {
-        return getClass().getSimpleName() + "[" + path + "]";
-    }
-
-    public LogicalLogAccess logicalLog( String name )
-    {
-        return new LogicalLogAccess( path, name );
+        makeStoreOk();
     }
 
     public void makeStoreOk()
@@ -130,6 +125,7 @@ public class GraphDatabaseStore
         }
     }
 
+    @Override
     public void shutdown()
     {
         nodeStore.close();

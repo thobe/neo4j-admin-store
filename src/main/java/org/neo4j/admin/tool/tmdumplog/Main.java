@@ -17,16 +17,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.admin.tool.dumplog;
+package org.neo4j.admin.tool.tmdumplog;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.TreeSet;
 
-import org.neo4j.kernel.impl.nioneo.xa.LogicalLogAccess;
+import org.neo4j.kernel.impl.transaction.TxLogAccess;
 
-class Main
+public class Main
 {
     public static void main( String[] args )
     {
@@ -34,16 +35,19 @@ class Main
         {
             for ( String fileName : filenamesOf( arg ) )
             {
-                LogicalLogAccess log = new LogicalLogAccess( fileName );
+                TxLogAccess log;
+                try
+                {
+                    log = new TxLogAccess( fileName );
+                }
+                catch ( IOException e )
+                {
+                    System.err.println( "Could not open: " + fileName );
+                    e.printStackTrace( System.err );
+                    continue;
+                }
                 System.out.println( "\n=== " + log + " ===" );
-                if ( log.isHeaderOk() )
-                {
-                    log.dump( System.out );
-                }
-                else
-                {
-                    System.out.println( "Unable to read timestamp information, no records in logical log." );
-                }
+                log.dump( System.out );
                 log.close();
             }
         }
@@ -58,7 +62,7 @@ class Main
             {
                 public boolean accept( File dir, String name )
                 {
-                    return name.contains( "_logical.log." );
+                    return name.startsWith( "tm_tx_log" );
                 }
             } );
             Collection<String> result = new TreeSet<String>();

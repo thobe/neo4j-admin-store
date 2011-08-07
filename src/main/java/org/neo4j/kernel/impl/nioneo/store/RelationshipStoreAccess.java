@@ -22,7 +22,8 @@ package org.neo4j.kernel.impl.nioneo.store;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class RelationshipStoreAccess extends StoreAccess<RelationshipStore, RelationshipRecord>
+public class RelationshipStoreAccess extends StoreAccess<RelationshipStore, RelationshipRecord> implements
+        PropertyContainerStore<RelationshipRecord>
 {
     public static final long NO_NEXT_RECORD = GraphDatabaseStore.NO_NEXT_REL,
             NO_PREV_RECORD = GraphDatabaseStore.NO_PREV_REL;
@@ -30,6 +31,19 @@ public class RelationshipStoreAccess extends StoreAccess<RelationshipStore, Rela
     RelationshipStoreAccess( RelationshipStore store )
     {
         super( store );
+    }
+
+    @Override
+    public RelationshipRecord copy( RelationshipRecord source, long newId )
+    {
+        RelationshipRecord target = new RelationshipRecord( newId, source.getFirstNode(), source.getSecondNode(),
+                source.getType() );
+        target.setFirstNextRel( source.getFirstNextRel() );
+        target.setFirstPrevRel( source.getFirstPrevRel() );
+        target.setSecondNextRel( source.getSecondNextRel() );
+        target.setSecondPrevRel( source.getSecondPrevRel() );
+        target.setNextProp( source.getNextProp() );
+        return target;
     }
 
     public Iterable<RelationshipRecord> forwardChain( final NodeRecord start )
@@ -128,6 +142,7 @@ public class RelationshipStoreAccess extends StoreAccess<RelationshipStore, Rela
         }
     }
 
+    @Override
     public void forceUpdateRecord( RelationshipRecord record )
     {
         PersistenceWindow window = store.acquireWindow( record.getId(), OperationType.WRITE );
@@ -256,5 +271,17 @@ public class RelationshipStoreAccess extends StoreAccess<RelationshipStore, Rela
         {
             throw new UnsupportedOperationException();
         }
+    }
+
+    @Override
+    public void setFirstPropertyOf( RelationshipRecord record, long property )
+    {
+        record.setNextProp( property );
+    }
+
+    @Override
+    public long getFirstPropertyOf( RelationshipRecord record )
+    {
+        return record.getNextProp();
     }
 }

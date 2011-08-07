@@ -19,17 +19,51 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
+import java.lang.reflect.Field;
 import java.util.Iterator;
 
 import org.neo4j.helpers.collection.PrefetchingIterator;
 
 public abstract class StoreAccess<T extends CommonAbstractStore, R extends Abstract64BitRecord>
 {
+    private static final Field idGenerator;
+
+    static
+    {
+        Field field;
+        try
+        {
+            field = CommonAbstractStore.class.getDeclaredField( "idGenerator" );
+        }
+        catch ( Exception e )
+        {
+            field = null;
+        }
+        idGenerator = field;
+    }
+
     final T store;
 
     StoreAccess( T store )
     {
         this.store = store;
+    }
+
+    public IdGenerator getIdGenerator()
+    {
+        try
+        {
+            return (IdGenerator) idGenerator.get( store );
+        }
+        catch ( Exception cause )
+        {
+            throw new UnsupportedOperationException( "cannot access id generator", cause );
+        }
+    }
+
+    public long nextId()
+    {
+        return store.nextId();
     }
 
     public long getHighId()
@@ -43,6 +77,10 @@ public abstract class StoreAccess<T extends CommonAbstractStore, R extends Abstr
     }
 
     public abstract R forceGetRecord( long id );
+
+    public abstract void forceUpdateRecord( R record );
+
+    public abstract R copy( R source, long newId );
 
     public Iterable<R> scan( final Filter<? super R>... filters )
     {

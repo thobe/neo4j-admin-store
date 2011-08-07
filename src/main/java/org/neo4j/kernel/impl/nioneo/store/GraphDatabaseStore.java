@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.neo4j.helpers.Triplet;
 import org.neo4j.kernel.CommonFactories;
 import org.neo4j.kernel.IdGeneratorFactory;
 import org.neo4j.kernel.impl.nioneo.xa.LogicalLogStore;
@@ -177,5 +178,24 @@ public class GraphDatabaseStore extends LogicalLogStore
     public ArrayPropertyStoreAccess getArrayPropertyStore()
     {
         return arrayStore == null ? null : new ArrayPropertyStoreAccess( arrayStore );
+    }
+
+    public Triplet<PropertyStoreAccess, StringPropertyStoreAccess, ArrayPropertyStoreAccess> newPropertyStore(
+            String path )
+    {
+        return newPropertyStore( path, defaultParams() );
+    }
+
+    public Triplet<PropertyStoreAccess, StringPropertyStoreAccess, ArrayPropertyStoreAccess> newPropertyStore(
+            String path, Map<Object, Object> params )
+    {
+        params.put( FileSystemAbstraction.class, CommonFactories.defaultFileSystemAbstraction() );
+        String fileName = path + "/neostore.propertystore.db";
+        PropertyStore.createStore( fileName, params );
+        PropertyStore props = new PropertyStore( fileName, params );
+        DynamicStringStore strings = (DynamicStringStore) get( propStore, STRING_PROPERTY_STORE );
+        DynamicArrayStore arrays = (DynamicArrayStore) get( propStore, ARRAY_PROPERTY_STORE );
+        return Triplet.of( new PropertyStoreAccess( props ), new StringPropertyStoreAccess( strings ),
+                new ArrayPropertyStoreAccess( arrays ) );
     }
 }

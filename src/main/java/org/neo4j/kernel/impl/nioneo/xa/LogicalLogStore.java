@@ -34,6 +34,11 @@ public class LogicalLogStore
         this.path = path;
     }
 
+    public String getPath()
+    {
+        return path;
+    }
+
     public void initialize()
     {
         // NOOP

@@ -31,8 +31,8 @@ import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
 import org.neo4j.kernel.impl.nioneo.store.Record;
 import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
 
-class Main extends SimpleStoreTool implements RecordProcessor.NodeProcessor, RecordProcessor.RelationshipProcessor,
-        RecordProcessor.PropertyProcessor
+public class Main extends SimpleStoreTool implements RecordProcessor.NodeProcessor,
+        RecordProcessor.RelationshipProcessor, RecordProcessor.PropertyProcessor
 {
     private final StringBuilder result;
     private boolean properties;

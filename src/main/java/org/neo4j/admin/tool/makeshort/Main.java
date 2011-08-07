@@ -78,7 +78,7 @@ public class Main extends SimpleStoreTool implements RecordProcessor<PropertyRec
             if ( ShortStringEncoding.store( record, strings.toString( string ) ) )
             {
                 string.setInUse( false );
-                strings.forceUpdate( string );
+                strings.forceUpdateRecord( string );
                 store.getPropStore().forceUpdateRecord( record );
                 converted++;
             }

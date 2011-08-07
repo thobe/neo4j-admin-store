@@ -26,7 +26,7 @@ import org.neo4j.kernel.impl.nioneo.store.Filter;
 import org.neo4j.kernel.impl.nioneo.store.Record;
 import org.neo4j.kernel.impl.nioneo.store.StringPropertyStoreAccess;
 
-class Main extends SimpleStoreTool implements Filter<DynamicRecord>
+public class Main extends SimpleStoreTool implements Filter<DynamicRecord>
 {
     Main( String[] args )
     {

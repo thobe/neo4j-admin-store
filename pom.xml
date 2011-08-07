@@ -5,11 +5,11 @@
   <parent>
     <groupId>org.neo4j</groupId>
     <artifactId>parent-central</artifactId>
-    <version>18</version>
+    <version>22</version>
   </parent>
   
   <properties>
-    <neo4j-version>1.4-SNAPSHOT</neo4j-version>
+    <neo4j-version>1.5-SNAPSHOT</neo4j-version>
     <bundle.namespace>org.neo4j.admin</bundle.namespace>
   </properties>
 
@@ -43,6 +43,12 @@
       <version>${neo4j-version}</version>
       <scope>provided</scope>
     </dependency>
+    <!--dependency>
+      <groupId>org.neo4j</groupId>
+      <artifactId>neo4j-testing-utils</artifactId>
+      <version>${neo4j-version}</version>
+      <scope>test</scope>
+    </dependency-->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

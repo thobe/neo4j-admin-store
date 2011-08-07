@@ -19,11 +19,21 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
-public class NodeStoreAccess extends StoreAccess<NodeStore, NodeRecord>
+
+public class NodeStoreAccess extends StoreAccess<NodeStore, NodeRecord> implements PropertyContainerStore<NodeRecord>
 {
     NodeStoreAccess( NodeStore store )
     {
         super( store );
+    }
+
+    @Override
+    public NodeRecord copy( NodeRecord source, long newId )
+    {
+        NodeRecord target = new NodeRecord( newId );
+        target.setNextRel( source.getNextRel() );
+        target.setNextProp( source.getNextProp() );
+        return target;
     }
 
     public NodeRecord getRecord( long id )
@@ -64,6 +74,7 @@ public class NodeStoreAccess extends StoreAccess<NodeStore, NodeRecord>
         }
     }
 
+    @Override
     public void forceUpdateRecord( NodeRecord record )
     {
         PersistenceWindow window = store.acquireWindow( record.getId(), OperationType.WRITE );
@@ -92,5 +103,17 @@ public class NodeStoreAccess extends StoreAccess<NodeStore, NodeRecord>
         {
             store.releaseWindow( window );
         }
+    }
+
+    @Override
+    public void setFirstPropertyOf( NodeRecord record, long property )
+    {
+        record.setNextProp( property );
+    }
+
+    @Override
+    public long getFirstPropertyOf( NodeRecord record )
+    {
+        return record.getNextProp();
     }
 }

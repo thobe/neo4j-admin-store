@@ -85,6 +85,10 @@ public class LogicalLogAccess
         }
         catch ( IOException e )
         {
+            header = null;
+        }
+        if ( header == null )
+        {
             header = new long[] { -1, -1 };
         }
         this.start = start;

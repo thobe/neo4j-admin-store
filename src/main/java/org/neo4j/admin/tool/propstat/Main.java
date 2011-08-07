@@ -28,7 +28,7 @@ import org.neo4j.kernel.impl.nioneo.store.Filter;
 import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
 import org.neo4j.kernel.impl.nioneo.store.PropertyType;
 
-class Main extends SimpleStoreTool implements RecordProcessor<PropertyRecord>, Filter<PropertyRecord>
+public class Main extends SimpleStoreTool implements RecordProcessor<PropertyRecord>, Filter<PropertyRecord>
 {
     private final Map<PropertyType, Statistics> statistics = new EnumMap<PropertyType, Statistics>( PropertyType.class );
 

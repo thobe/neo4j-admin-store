@@ -21,6 +21,7 @@ package org.neo4j.kernel.impl.nioneo.store;
 
 @SuppressWarnings( "boxing" )
 public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends StoreAccess<T, DynamicRecord>
+        implements ChainStore<DynamicRecord>
 {
     public static final long NO_NEXT_RECORD = GraphDatabaseStore.NO_NEXT_BLOCK,
             NO_PREV_RECORD = GraphDatabaseStore.NO_PREV_BLOCK;
@@ -41,6 +42,29 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
     }
 
     @Override
+    public DynamicRecord copy( DynamicRecord source, long newId )
+    {
+        DynamicRecord target = new DynamicRecord( newId );
+        target.setType( source.getType() );
+        target.setLength( source.getLength() );
+        target.setNextBlock( source.getNextBlock() );
+        target.setPrevBlock( source.getPrevBlock() );
+        if ( source.isLight() )
+        {
+            makeHeavy( source );
+        }
+        if ( source.isCharData() )
+        {
+            target.setCharData( source.getDataAsChar() );
+        }
+        else
+        {
+            target.setData( source.getData() );
+        }
+        return target;
+    }
+
+    @Override
     public DynamicRecord forceGetRecord( long blockId )
     {
         PersistenceWindow window = store.acquireWindow( blockId, OperationType.READ );
@@ -49,25 +73,30 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
             DynamicRecord record = new DynamicRecord( blockId );
             Buffer buffer = window.getOffsettedBuffer( blockId );
 
-            // [    ,   x] in use
-            // [xxxx,    ] high bits for prev block
+            // [ , x] in use
+            // [xxxx, ] high bits for prev block
             long inUseByte = buffer.get();
-            boolean inUse = (inUseByte & 0x1) == Record.IN_USE.intValue();
+            boolean inUse = ( inUseByte & 0x1 ) == Record.IN_USE.intValue();
             long prevBlock = buffer.getUnsignedInt();
-            long prevModifier = (inUseByte & 0xF0L) << 28;
+            long prevModifier = ( inUseByte & 0xF0L ) << 28;
 
             int dataSize = store.getBlockSize() - BLOCK_HEADER_SIZE;
 
-            // [    ,    ][xxxx,xxxx][xxxx,xxxx][xxxx,xxxx] number of bytes
-            // [    ,xxxx][    ,    ][    ,    ][    ,    ] higher bits for next block
+            // [ , ][xxxx,xxxx][xxxx,xxxx][xxxx,xxxx] number of bytes
+            // [ ,xxxx][ , ][ , ][ , ] higher bits for next block
             long nrOfBytesInt = buffer.getInt();
 
-            int nrOfBytes = (int)(nrOfBytesInt & 0xFFFFFF);
+            int nrOfBytes = (int) ( nrOfBytesInt & 0xFFFFFF );
 
             long nextBlock = buffer.getUnsignedInt();
-            long nextModifier = (nrOfBytesInt & 0xF000000L) << 8;
+            long nextModifier = ( nrOfBytesInt & 0xF000000L ) << 8;
 
             long longNextBlock = longFromIntAndMod( nextBlock, nextModifier );
+
+            byte byteArrayElement[] = new byte[dataSize];
+            buffer.get( byteArrayElement );
+            record.setData( byteArrayElement );
+
             record.setInUse( inUse );
             record.setLength( nrOfBytes );
             record.setPrevBlock( longFromIntAndMod( prevBlock, prevModifier ) );
@@ -80,7 +109,8 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
         }
     }
 
-    public void forceUpdate( DynamicRecord record )
+    @Override
+    public void forceUpdateRecord( DynamicRecord record )
     {
         long blockId = record.getId();
         PersistenceWindow window = store.acquireWindow( blockId, OperationType.WRITE );
@@ -89,28 +119,30 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
             Buffer buffer = window.getOffsettedBuffer( blockId );
 
             long prevProp = record.getPrevBlock();
-            short prevModifier = prevProp == Record.NO_NEXT_BLOCK.intValue() ? 0 : (short)((prevProp & 0xF00000000L) >> 28);
+            short prevModifier = prevProp == Record.NO_NEXT_BLOCK.intValue() ? 0
+                    : (short) ( ( prevProp & 0xF00000000L ) >> 28 );
 
             long nextProp = record.getNextBlock();
-            int nextModifier = nextProp == Record.NO_NEXT_BLOCK.intValue() ? 0 : (int)((nextProp & 0xF00000000L) >> 8);
+            int nextModifier = nextProp == Record.NO_NEXT_BLOCK.intValue() ? 0
+                    : (int) ( ( nextProp & 0xF00000000L ) >> 8 );
 
-            // [    ,   x] in use
-            // [xxxx,    ] high prev block bits
+            // [ , x] in use
+            // [xxxx, ] high prev block bits
             short inUseUnsignedByte = Record.IN_USE.byteValue();
             if ( !record.inUse() )
             {
                 inUseUnsignedByte = 0;
             }
-            inUseUnsignedByte = (short)( inUseUnsignedByte | prevModifier);
+            inUseUnsignedByte = (short) ( inUseUnsignedByte | prevModifier );
 
-            // [    ,    ][xxxx,xxxx][xxxx,xxxx][xxxx,xxxx] nr of bytes
-            // [    ,xxxx][    ,    ][    ,    ][    ,    ] high next block bits
+            // [ , ][xxxx,xxxx][xxxx,xxxx][xxxx,xxxx] nr of bytes
+            // [ ,xxxx][ , ][ , ][ , ] high next block bits
             int nrOfBytesInt = record.getLength();
             nrOfBytesInt |= nextModifier;
 
             assert record.getId() != record.getPrevBlock();
-            buffer.put( (byte)inUseUnsignedByte ).putInt( (int)prevProp ).putInt( nrOfBytesInt )
-                .putInt( (int)nextProp );
+            buffer.put( (byte) inUseUnsignedByte ).putInt( (int) prevProp ).putInt( nrOfBytesInt )
+                    .putInt( (int) nextProp );
 
             if ( record.inUse() && !record.isLight() )
             {
@@ -128,5 +160,24 @@ public abstract class DynamicStoreAccess<T extends AbstractDynamicStore> extends
         {
             store.releaseWindow( window );
         }
+    }
+
+    public Iterable<DynamicRecord> chain( long firstId )
+    {
+        return new RecordChain<DynamicRecord, DynamicStoreAccess<T>>( this, firstId );
+    }
+
+    @Override
+    public DynamicRecord nextRecordInChainOrNull( DynamicRecord prev )
+    {
+        long next = prev.getNextBlock();
+        return ( next == NO_NEXT_RECORD ) ? null : forceGetRecord( next );
+    }
+
+    @Override
+    public void linkChain( DynamicRecord prev, DynamicRecord next )
+    {
+        prev.setNextBlock( next.getId() );
+        next.setPrevBlock( prev.getId() );
     }
 }

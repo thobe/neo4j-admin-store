@@ -19,7 +19,9 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
-public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyRecord>
+
+public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyRecord> implements
+        ChainStore<PropertyRecord>
 {
     public static final long NO_NEXT_RECORD = GraphDatabaseStore.NO_NEXT_PROP,
             NO_PREV_RECORD = GraphDatabaseStore.NO_PREV_PROP;
@@ -27,6 +29,23 @@ public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyReco
     PropertyStoreAccess( PropertyStore store )
     {
         super( store );
+    }
+
+    public void close()
+    {
+        store.close();
+    }
+
+    @Override
+    public PropertyRecord copy( PropertyRecord source, long newId )
+    {
+        PropertyRecord target = new PropertyRecord( newId );
+        target.setType( source.getType() );
+        target.setKeyIndexId( source.getKeyIndexId() );
+        target.setNextProp( source.getNextProp() );
+        target.setPrevProp( source.getPrevProp() );
+        target.setPropBlock( source.getPropBlock() );
+        return target;
     }
 
     @Override
@@ -68,6 +87,7 @@ public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyReco
         }
     }
 
+    @Override
     public void forceUpdateRecord( PropertyRecord record )
     {
         PersistenceWindow window = store.acquireWindow( record.getId(), OperationType.WRITE );
@@ -118,5 +138,24 @@ public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyReco
             result = null;
         }
         return result;
+    }
+
+    public Iterable<PropertyRecord> chain( long firstId )
+    {
+        return new RecordChain<PropertyRecord, PropertyStoreAccess>( this, firstId );
+    }
+
+    @Override
+    public PropertyRecord nextRecordInChainOrNull( PropertyRecord prev )
+    {
+        long next = prev.getNextProp();
+        return ( next == NO_NEXT_RECORD ) ? null : forceGetRecord( next );
+    }
+
+    @Override
+    public void linkChain( PropertyRecord prev, PropertyRecord next )
+    {
+        prev.setNextProp( next.getId() );
+        next.setPrevProp( prev.getId() );
     }
 }

@@ -20,8 +20,8 @@
 package org.neo4j.admin.nioneo;
 
 import java.rmi.RemoteException;
-import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 
+import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
 import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
 import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
@@ -64,13 +64,13 @@ public class Store extends NioneoApp
             DynamicRecord rec = (DynamicRecord )record;
             if ( rec.getType() == PropertyType.STRING.intValue() )
             {
-                getServer().getStringStore().forceUpdate( rec );
+                getServer().getStringStore().forceUpdateRecord( rec );
                 response = "StringRecord #" + record.getId() + " stored";
 
             }
             else if ( rec.getType() == PropertyType.ARRAY.intValue() )
             {
-                getServer().getArrayStore().forceUpdate( rec );
+                getServer().getArrayStore().forceUpdateRecord( rec );
                 response = "ArrayRecord #" + record.getId() + " stored";
 
             }

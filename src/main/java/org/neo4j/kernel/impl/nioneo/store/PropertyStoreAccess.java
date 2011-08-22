@@ -30,7 +30,17 @@ public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyReco
     {
         super( store );
     }
+    
+    public String getStringForDynamicPropertyRecord( long id )
+    {
+        return (String) this.store.getStringFor( this.store.getRecord( id ) );
+    }
 
+    public Object getArrayForDynamicPropertyRecord( long id )
+    {
+        return this.store.getArrayFor( this.store.getRecord( id ) );
+    }
+    
     public void close()
     {
         store.close();

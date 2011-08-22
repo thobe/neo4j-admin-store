@@ -38,10 +38,7 @@ public class StringPropertyStoreAccess extends DynamicStoreAccess<DynamicStringS
 
     public String toString( DynamicRecord record )
     {
-        if ( record.isLight() )
-        {
-            makeHeavy( record );
-        }
+        makeHeavy( record );
         final char[] chars;
         if ( !record.isCharData() )
         {

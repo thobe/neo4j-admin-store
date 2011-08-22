@@ -19,28 +19,42 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
+import org.neo4j.admin.tool.kernelprototypes.LongerShortString;
+
 public enum ShortStringEncoding
 {
     EMPTY,
     UTF8,
     LATIN1,
     NUMERICAL,
+    DATE,
     UPPER,
     LOWER,
+    EMAIL,
+    EMAIL_PLUS,
     ALPHANUM,
-    EUROPEAN, ;
+    ALPHA_SYMBOL,
+    EUROPEAN,
+    LONGER;
 
-    public static ShortStringEncoding getEncoding( String string )
+    public static ShortStringEncoding getEncoding( String string, boolean useLongVersion )
     {
         PropertyRecord target = new PropertyRecord( -1 );
-        if ( ShortString.encode( string, target ) )
+        if ( useLongVersion )
         {
-            return getEncoding( target.getPropBlock() );
+            boolean result = LongerShortString.encode( 0, string, target, 24 );
+            return result ? LONGER : null;
         }
         else
         {
-            return null;
+            return ShortString.encode( string, target ) ?
+                    getEncoding( target.getPropBlock() ) : null;
         }
+    }
+    
+    public static Object extractValue( PropertyRecord record )
+    {
+        return ShortString.decode( record.getPropBlock() );
     }
 
     /**

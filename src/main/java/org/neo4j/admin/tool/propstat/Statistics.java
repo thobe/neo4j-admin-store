@@ -19,41 +19,54 @@
  */
 package org.neo4j.admin.tool.propstat;
 
-abstract class Statistics
+import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyStoreAccess;
+
+class Statistics
 {
-    static class Simple extends Statistics
+    private final PropertyStoreAccess propertyStore;
+    private final String name;
+    private long count;
+    
+    Statistics( PropertyStoreAccess propertyStore, String name )
     {
-        private final String name;
-        private long count = 0;
-
-        Simple( String name )
-        {
-            this.name = name;
-        }
-
-        @Override
-        void add( long payload )
-        {
-            count++;
-        }
-
-        @Override
-        public String toString()
-        {
-            return name + ": " + count;
-        }
-
-        @Override
-        boolean hasData()
-        {
-            return count != 0;
-        }
+        this.propertyStore = propertyStore;
+        this.name = name;
+    }
+    
+    protected PropertyStoreAccess getPropertyStore()
+    {
+        return propertyStore;
     }
 
-    abstract void add( long payload );
+    void add( Object value, PropertyRecord record )
+    {
+        incrementCount();
+    }
+    
+    Object extractValue( PropertyRecord record )
+    {
+        return record.getType().getValue( record, getPropertyStore().getStore() );
+    }
 
     @Override
-    public abstract String toString();
+    public String toString()
+    {
+        return name + ": " + count();
+    }
 
-    abstract boolean hasData();
+    boolean hasData()
+    {
+        return count > 0;
+    }
+    
+    protected void incrementCount()
+    {
+        count++;
+    }
+    
+    long count()
+    {
+        return count;
+    }
 }

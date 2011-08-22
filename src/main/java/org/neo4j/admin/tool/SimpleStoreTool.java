@@ -34,7 +34,7 @@ public abstract class SimpleStoreTool
 
     protected SimpleStoreTool( String[] args )
     {
-        if ( args.length != 1 )
+        if ( args.length == 0 )
         {
             throw new IllegalArgumentException( "USAGE: java -jar " + jar( getClass() ) + " <path to neo4j store dir>" );
         }

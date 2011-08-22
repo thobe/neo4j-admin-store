@@ -19,10 +19,16 @@
  */
 package org.neo4j.admin.tool.propstat;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.TreeMap;
 
+import org.neo4j.helpers.Pair;
 import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
+import org.neo4j.kernel.impl.nioneo.store.PropertyStoreAccess;
 import org.neo4j.kernel.impl.nioneo.store.Record;
 import org.neo4j.kernel.impl.nioneo.store.ShortStringEncoding;
 import org.neo4j.kernel.impl.nioneo.store.StringPropertyStoreAccess;
@@ -34,9 +40,16 @@ abstract class StringStatistics extends Statistics
     static class ShortString extends StringStatistics
     {
         @Override
-        void add( long payload )
+        void add( Object value, PropertyRecord record )
         {
-            statistics.get( ShortStringEncoding.getEncoding( payload ) ).add( 0 );
+            super.add( value, record );
+            statistics.get( ShortStringEncoding.getEncoding( record.getPropBlock() ) ).add( value, record );
+        }
+        
+        @Override
+        Object extractValue( PropertyRecord record )
+        {
+            return ShortStringEncoding.extractValue( record );
         }
 
         @Override
@@ -50,41 +63,130 @@ abstract class StringStatistics extends Statistics
     {
         private long singleBlock = 0, multiBlock = 0;
         private final StringPropertyStoreAccess stringStore;
+        private final Map<Integer, Pair<Statistics, Collection<String>>> longStringByLengthStatistics =
+                new TreeMap<Integer, Pair<Statistics, Collection<String>>>();
+        private static final int[] LENGTH_CATEGORIES = new int[] { 5, 10, 15, 20, 25, 30, 50, 100, 200, 500 };
+        private final PropertyStoreAccess propertyStoreAccess;
+        private final boolean useLongVersion;
 
-        DynamicString( StringPropertyStoreAccess stringStore )
+        DynamicString( StringPropertyStoreAccess stringStore, PropertyStoreAccess propertyStoreAccess, boolean useLongVersion )
         {
             this.stringStore = stringStore;
+            this.propertyStoreAccess = propertyStoreAccess;
+            this.useLongVersion = useLongVersion;
+            int previous = 0;
+            for ( int category : LENGTH_CATEGORIES )
+            {
+                longStringByLengthStatistics.put( category, Pair.<Statistics, Collection<String>>of(
+                        new Statistics( propertyStoreAccess, "Dynamic string length " + previous + "-" + (category-1) ), new ArrayList<String>() ) );
+                previous = category;
+            }
+            longStringByLengthStatistics.put( Integer.MAX_VALUE, Pair.<Statistics, Collection<String>>of(
+                    new Statistics( propertyStoreAccess, "Dynamic string length " + previous + "-" ), new ArrayList<String>() ) );
+        }
+        
+        @Override
+        Object extractValue( PropertyRecord record )
+        {
+            DynamicRecord dynamicRecord = stringStore.forceGetRecord( record.getPropBlock() );
+            if ( !dynamicRecord.inUse() )
+            {
+                return null;
+            }
+            
+            return propertyStoreAccess.getStringForDynamicPropertyRecord( record.getId() );
         }
 
         @Override
-        void add( long payload )
+        void add( Object value, PropertyRecord record )
         {
-            DynamicRecord record = stringStore.forceGetRecord( (int) payload );
-            if ( record.getNextBlock() == NO_NEXT_BLOCK )
+            if ( value == null )
             {
-                ShortStringEncoding encoding = ShortStringEncoding.getEncoding( stringStore.toString( record ) );
-                if ( encoding != null )
-                {
-                    statistics.get( encoding ).add( 0 );
-                }
-                else
-                {
-                    singleBlock++;
-                }
+                return;
+            }
+            
+            super.add( value, record );
+            String stringValue = (String) value;
+            ShortStringEncoding encoding = ShortStringEncoding.getEncoding( stringValue, useLongVersion );
+            if ( encoding != null )
+            {
+                statistics.get( encoding ).add( null, null );
             }
             else
             {
-                multiBlock++;
+                DynamicRecord dynamicRecord = stringStore.forceGetRecord( record.getPropBlock() );
+                if ( dynamicRecord.getNextBlock() == NO_NEXT_BLOCK ) singleBlock++;
+                else multiBlock++;
+                addStringByLengthToStats( stringValue );
             }
+        }
+
+        private void addStringByLengthToStats( String string )
+        {
+            int category = getLengthCategory( string );
+            Pair<Statistics, Collection<String>> stats = longStringByLengthStatistics.get( category );
+            stats.first().add( null, null );
+            if ( stats.other().size() < 5 )
+            {
+                stats.other().add( string );
+            }
+        }
+
+        private int getLengthCategory( String string )
+        {
+            int stringLength = string.length();
+            for ( int category : LENGTH_CATEGORIES )
+            {
+                if ( stringLength < category )
+                {
+                    return category;
+                }
+            }
+            return Integer.MAX_VALUE;
         }
 
         @Override
         @SuppressWarnings( "boxing" )
         String header()
         {
+            int percentageThatCouldHaveBeenShort = (int) Math.round( ((double)shortCount()/(double)allCount())*100 );
             return String.format(
-                    "Dynamic string properties, single block=%s, multiple blocks=%s, could have been short",
-                    singleBlock, multiBlock );
+                    "Dynamic string properties, single block=%s, multiple blocks=%s, could have been short (%d %%)",
+                    singleBlock, multiBlock, percentageThatCouldHaveBeenShort );
+        }
+
+        private long allCount()
+        {
+            return singleBlock+multiBlock+shortCount();
+        }
+
+        private long shortCount()
+        {
+            long result = 0;
+            for ( Statistics stats : statistics.values() )
+            {
+                result += stats.count();
+            }
+            return result;
+        }
+        
+        @Override
+        public String toString()
+        {
+            StringBuilder result = toStringBuilder();
+            for ( Pair<Statistics, Collection<String>> stats : longStringByLengthStatistics.values() )
+            {
+                if ( stats.first().hasData() )
+                {
+                    appendStat( result, stats.first() );
+//                    result.append( "\n  samples:" );
+//                    for ( String sample : stats.other() )
+//                    {
+//                        result.append( "\n   " + sample );
+//                    }
+                }
+            }
+            return result.toString();
         }
     }
 
@@ -93,14 +195,20 @@ abstract class StringStatistics extends Statistics
 
     private StringStatistics()
     {
+        super( null, null );
         for ( ShortStringEncoding encoding : ShortStringEncoding.values() )
         {
-            statistics.put( encoding, new Statistics.Simple( encoding.name() ) );
+            statistics.put( encoding, new Statistics( null, encoding.name() ) );
         }
     }
 
     @Override
     public String toString()
+    {
+        return toStringBuilder().toString();
+    }
+
+    protected StringBuilder toStringBuilder()
     {
         StringBuilder result = new StringBuilder( header() ).append( ":" );
         boolean none = true;
@@ -108,12 +216,17 @@ abstract class StringStatistics extends Statistics
         {
             if ( stats.hasData() )
             {
-                result.append( "\n    " ).append( stats );
+                appendStat( result, stats );
                 none = false;
             }
         }
         if ( none ) result.append( " none" );
-        return result.toString();
+        return result;
+    }
+
+    protected static void appendStat( StringBuilder result, Statistics stats )
+    {
+        result.append( "\n    " ).append( stats );
     }
 
     abstract String header();

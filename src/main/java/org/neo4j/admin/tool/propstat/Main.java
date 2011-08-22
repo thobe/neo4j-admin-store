@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.neo4j.admin.tool.RecordProcessor;
 import org.neo4j.admin.tool.SimpleStoreTool;
+import org.neo4j.helpers.Args;
 import org.neo4j.kernel.impl.nioneo.store.Filter;
 import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
 import org.neo4j.kernel.impl.nioneo.store.PropertyType;
@@ -35,6 +36,8 @@ public class Main extends SimpleStoreTool implements RecordProcessor<PropertyRec
     private Main( String[] args )
     {
         super( args );
+        Args arg = new Args( args );
+        boolean useLongVersion = arg.getBoolean( "long", false );
         for ( PropertyType type : PropertyType.values() )
         {
             final Statistics stat;
@@ -44,10 +47,13 @@ public class Main extends SimpleStoreTool implements RecordProcessor<PropertyRec
                 stat = new StringStatistics.ShortString();
                 break;
             case STRING:
-                stat = new StringStatistics.DynamicString( store.getStringPropertyStore() );
+                stat = new StringStatistics.DynamicString( store.getStringPropertyStore(), store.getPropStore(), useLongVersion );
+                break;
+            case ARRAY:
+                stat = new ArrayStatistics( store.getArrayPropertyStore(), store.getPropStore() );
                 break;
             default:
-                stat = new Statistics.Simple( type.name() );
+                stat = new Statistics( store.getPropStore(), type.name() );
             }
             statistics.put( type, stat );
         }
@@ -73,7 +79,8 @@ public class Main extends SimpleStoreTool implements RecordProcessor<PropertyRec
     @Override
     public void process( PropertyRecord record )
     {
-        statistics.get( record.getType() ).add( record.getPropBlock() );
+        Statistics stats = statistics.get( record.getType() );
+        stats.add( stats.extractValue( record ), record );
     }
 
     @Override

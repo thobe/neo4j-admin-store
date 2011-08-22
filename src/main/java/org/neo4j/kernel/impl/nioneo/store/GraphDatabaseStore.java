@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.neo4j.helpers.Triplet;
 import org.neo4j.kernel.CommonFactories;
+import org.neo4j.kernel.Config;
 import org.neo4j.kernel.IdGeneratorFactory;
 import org.neo4j.kernel.impl.nioneo.xa.LogicalLogStore;
 
@@ -150,6 +151,7 @@ public class GraphDatabaseStore extends LogicalLogStore
         {
             params.put( "use_memory_mapped_buffers", "false" );
         }
+        params.put( Config.REBUILD_IDGENERATORS_FAST, "true" );
         //
         params.put( IdGeneratorFactory.class, new CommonFactories.DefaultIdGeneratorFactory() );
         return params;

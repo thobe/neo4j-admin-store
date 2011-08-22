@@ -111,6 +111,11 @@ public abstract class StoreAccess<T extends CommonAbstractStore, R extends Abstr
             }
         };
     }
+    
+    public T getStore()
+    {
+        return store;
+    }
 
     protected static long longFromIntAndMod( long base, long modifier )
     {

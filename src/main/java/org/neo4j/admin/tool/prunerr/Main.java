@@ -98,6 +98,7 @@ public class Main extends SimpleStoreTool
 
         private void fix( R record )
         {
+            System.out.println( record );
             store.setFirstPropertyOf( record, PropertyStoreAccess.NO_NEXT_RECORD );
             store.forceUpdateRecord( record );
         }

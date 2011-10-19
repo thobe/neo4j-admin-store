@@ -33,7 +33,8 @@
     <package tool="graphviz"/>
     <package tool="consistency"/>
     <package tool="dumplog"/>
-  	<package tool="tmdumplog"/>
+    <package tool="tmdumplog"/>
+    <package tool="prunerr"/>
   </target>
 
   <macrodef name="package">

@@ -36,25 +36,24 @@ import org.neo4j.shell.ShellException;
 public class FixPropChain extends NioneoApp
 {
 
-    public String execute( AppCommandParser parser, Session session, Output out )
-            throws ShellException
+    public String execute( AppCommandParser parser, Session session, Output out ) throws ShellException
     {
         String arg = parser.arguments().get( 0 );
         int id = Integer.parseInt( arg );
-		NodeStoreAccess nodeStore = getServer().getNodeStore();
+        NodeStoreAccess nodeStore = getServer().getNodeStore();
         NodeRecord nodeRecord = nodeStore.forceGetRecord( id );
         long nextProp = nodeRecord.getNextProp();
         return checkChain( getServer(), out, nextProp );
     }
 
-	static String checkChain( NioneoServer server, Output out, long nextProp ) throws ShellException 
-	{
+    static String checkChain( NioneoServer server, Output out, long nextProp ) throws ShellException
+    {
         long prevProp = Record.NO_PREVIOUS_PROPERTY.intValue();
         PropertyStoreAccess propStore = server.getPropStore();
         while ( nextProp != Record.NO_NEXT_PROPERTY.intValue() )
         {
             PropertyRecord propRecord = propStore.forceGetRecord( nextProp );
-            if ( !propRecord.inUse()  )
+            if ( !propRecord.inUse() )
             {
                 nextProp = Record.NO_NEXT_PROPERTY.intValue();
                 if ( prevProp != Record.NO_PREVIOUS_PROPERTY.intValue() )
@@ -68,8 +67,7 @@ public class FixPropChain extends NioneoApp
             {
                 if ( propRecord.getType() == PropertyType.STRING )
                 {
-                    DynamicRecord dr = server.getStringStore().forceGetRecord(
-                        (int) propRecord.getPropBlock() );
+                    DynamicRecord dr = server.getStringStore().forceGetRecord( (int) propRecord.getPropBlock() );
                     if ( !dr.inUse() )
                     {
                         propRecord.setInUse( false );
@@ -97,8 +95,7 @@ public class FixPropChain extends NioneoApp
                 }
                 else if ( propRecord.getType() == PropertyType.ARRAY )
                 {
-                    DynamicRecord dr = server.getArrayStore().forceGetRecord(
-                        (int) propRecord.getPropBlock() );
+                    DynamicRecord dr = server.getArrayStore().forceGetRecord( (int) propRecord.getPropBlock() );
                     if ( !dr.inUse() )
                     {
                         propRecord.setInUse( false );
@@ -142,5 +139,5 @@ public class FixPropChain extends NioneoApp
             throw ShellException.wrapCause( e );
         }
         return null;
-	}
+    }
 }

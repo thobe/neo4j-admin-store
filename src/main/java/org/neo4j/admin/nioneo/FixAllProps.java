@@ -32,8 +32,7 @@ import org.neo4j.shell.ShellException;
 public class FixAllProps extends NioneoApp
 {
 
-    public String execute( AppCommandParser parser, Session session, Output out )
-            throws ShellException
+    public String execute( AppCommandParser parser, Session session, Output out ) throws ShellException
     {
         String arg = parser.arguments().get( 0 );
         int id = Integer.parseInt( arg );
@@ -44,7 +43,7 @@ public class FixAllProps extends NioneoApp
             NodeRecord record = nodeStore.forceGetRecord( i );
             if ( record.inUse() && record.getNextProp() != Record.NO_NEXT_PROPERTY.intValue() )
             {
-            	FixPropChain.checkChain(getServer(), out, record.getNextProp() );
+                FixPropChain.checkChain( getServer(), out, record.getNextProp() );
             }
         }
         RelationshipStoreAccess relStore = getServer().getRelStore();
@@ -54,7 +53,7 @@ public class FixAllProps extends NioneoApp
             RelationshipRecord record = relStore.forceGetRecord( i );
             if ( record.inUse() && record.getNextProp() != Record.NO_NEXT_PROPERTY.intValue() )
             {
-            	FixPropChain.checkChain(getServer(), out, record.getNextProp() );
+                FixPropChain.checkChain( getServer(), out, record.getNextProp() );
             }
         }
         return null;

@@ -17,24 +17,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-/**
- * Cororg.neo4j.admin.check"Neo TechnologRecordInconsistencygine for Objects in Lund AB [http://neotechnology.com]
- *
- * This file is part of Neo4j.
- *
- * Neo4j is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.neo4j.admin.check;
 
 import java.util.ArrayList;
@@ -59,7 +41,15 @@ public class RecordInconsistency
 {
     public static List<RecordInconsistency> check( GraphDatabaseStore store )
     {
-        List<RecordInconsistency> result = new ArrayList<RecordInconsistency>();
+        List<RecordInconsistency> result = new ArrayList<RecordInconsistency>()
+        {
+            @Override
+            public boolean add( RecordInconsistency e )
+            {
+                System.out.println( e );
+                return true;
+            }
+        };
         checkNodeStore( store.getNodeStore(), store.getRelStore(), store.getPropStore(), result );
         checkRelStore( store.getRelStore(), store.getNodeStore(), store.getPropStore(), result );
         checkPropStore( store.getPropStore(), store.getStringPropertyStore(), store.getArrayPropertyStore(), result );

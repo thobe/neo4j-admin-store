@@ -22,13 +22,15 @@ package org.neo4j.admin.tool.pruneloop;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.neo4j.admin.tool.RecordProcessor;
 import org.neo4j.admin.tool.SimpleStoreTool;
+import org.neo4j.kernel.impl.nioneo.store.Filter;
 import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
 import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;
 import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
 import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
 
-public class Main extends SimpleStoreTool
+public class Main extends SimpleStoreTool implements RecordProcessor<NodeRecord>
 {
     private final RelationshipStoreAccess rels = store.getRelStore();
     private final NodeStoreAccess nodes = store.getNodeStore();
@@ -50,12 +52,22 @@ public class Main extends SimpleStoreTool
     }
 
     @Override
+    @SuppressWarnings( "unchecked" )
     protected void run() throws Throwable
     {
-        for ( long startNode : rootNodes )
-        {
-            fixChainOf( startNode, nodes.forceGetRecord( startNode ) );
-        }
+        if ( rootNodes.length > 0 )
+            for ( long startNode : rootNodes )
+            {
+                fixChainOf( startNode, nodes.forceGetRecord( startNode ) );
+            }
+        else
+            process( this, nodes, Filter.IN_USE );
+    }
+
+    @Override
+    public void process( NodeRecord record )
+    {
+        fixChainOf( record.getId(), record );
     }
 
     private void fixChainOf( final long nodeId, final NodeRecord node )
@@ -67,7 +79,7 @@ public class Main extends SimpleStoreTool
             RelationshipRecord prev = rel;
             rel = rels.forceGetRecord( curId );
             boolean linked = false;
-            if ( !rel.inUse() )
+            if ( rel.inUse() )
             {
                 if ( rel.getFirstNode() == nodeId )
                 {
@@ -89,7 +101,11 @@ public class Main extends SimpleStoreTool
                     }
                     finally
                     {
-                        if ( fixed ) rels.forceUpdateRecord( rel );
+                        if ( fixed )
+                        {
+                            System.out.println( rel );
+                            rels.forceUpdateRecord( rel );
+                        }
                         linked = true;
                     }
                 }
@@ -113,7 +129,11 @@ public class Main extends SimpleStoreTool
                     }
                     finally
                     {
-                        if ( fixed ) rels.forceUpdateRecord( rel );
+                        if ( fixed )
+                        {
+                            System.out.println( rel );
+                            rels.forceUpdateRecord( rel );
+                        }
                         linked = true;
                     }
                 }
@@ -131,12 +151,14 @@ public class Main extends SimpleStoreTool
                     {
                         prev.setSecondNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
                     }
+                    System.out.println( prev );
                     rels.forceUpdateRecord( prev );
                     return; // chain broken
                 }
                 else
                 { // in the start of the chain
                     node.setNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
+                    System.out.println( node );
                     nodes.forceUpdateRecord( node );
                     return; // chain broken
                 }

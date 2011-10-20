@@ -28,7 +28,7 @@ import org.neo4j.kernel.impl.nioneo.store.Filter;
 import org.neo4j.kernel.impl.nioneo.store.GraphDatabaseStore;
 import org.neo4j.kernel.impl.nioneo.store.StoreAccess;
 
-public abstract class SimpleStoreTool
+public abstract class SimpleStoreTool implements StoreToolRunner
 {
     protected final GraphDatabaseStore store;
 
@@ -102,7 +102,13 @@ public abstract class SimpleStoreTool
         store.shutdown();
     }
 
-    protected static <T extends CommonAbstractStore, R extends Abstract64BitRecord> void process(
+    @Override
+    public GraphDatabaseStore store()
+    {
+        return store;
+    }
+
+    public final <T extends CommonAbstractStore, R extends Abstract64BitRecord> void process(
             RecordProcessor<R> processor, StoreAccess<T, R> store, Filter<? super R>... filters )
     {
         long highId = store.getHighId();

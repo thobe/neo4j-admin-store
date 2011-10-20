@@ -20,8 +20,11 @@
 package org.neo4j.admin.check;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import org.neo4j.admin.tool.RecordProcessor;
+import org.neo4j.admin.tool.StoreToolRunner;
 import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 import org.neo4j.kernel.impl.nioneo.store.ArrayPropertyStoreAccess;
 import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
@@ -41,15 +44,7 @@ public class RecordInconsistency
 {
     public static List<RecordInconsistency> check( GraphDatabaseStore store )
     {
-        List<RecordInconsistency> result = new ArrayList<RecordInconsistency>()
-        {
-            @Override
-            public boolean add( RecordInconsistency e )
-            {
-                System.out.println( e );
-                return true;
-            }
-        };
+        List<RecordInconsistency> result = new ArrayList<RecordInconsistency>();
         checkNodeStore( store.getNodeStore(), store.getRelStore(), store.getPropStore(), result );
         checkRelStore( store.getRelStore(), store.getNodeStore(), store.getPropStore(), result );
         checkPropStore( store.getPropStore(), store.getStringPropertyStore(), store.getArrayPropertyStore(), result );
@@ -57,153 +52,228 @@ public class RecordInconsistency
     }
 
     private static void checkNodeStore( NodeStoreAccess nodeStore, RelationshipStoreAccess relStore,
-            PropertyStoreAccess propStore, List<RecordInconsistency> result )
+            PropertyStoreAccess propStore, Collection<RecordInconsistency> result )
     {
         for ( NodeRecord node : nodeStore.scan( Filter.IN_USE ) )
         {
-            long relId = node.getNextRel();
-            if ( relId != RelationshipStoreAccess.NO_NEXT_RECORD )
-            {
-                RelationshipRecord rel = relStore.forceGetRecord( relId );
-                if ( !rel.inUse() || !( rel.getFirstNode() == node.getId() || rel.getSecondNode() == node.getId() ) )
-                {
-                    result.add( new RecordInconsistency( node, rel ) );
-                }
-            }
-            if ( propStore != null )
-            {
-                long propId = node.getNextProp();
-                if ( propId != PropertyStoreAccess.NO_NEXT_RECORD )
-                {
-                    PropertyRecord prop = propStore.forceGetRecord( propId );
-                    if ( !prop.inUse() ) result.add( new RecordInconsistency( node, prop ) );
-                }
-            }
+            checkNode( relStore, propStore, result, node );
         }
     }
 
-    @SuppressWarnings( "boxing" )
     private static void checkRelStore( RelationshipStoreAccess relStore, NodeStoreAccess nodeStore,
-            PropertyStoreAccess propStore, List<RecordInconsistency> result )
+            PropertyStoreAccess propStore, Collection<RecordInconsistency> result )
     {
-        RecordField[] fields = RecordField.values();
         for ( RelationshipRecord rel : relStore.scan( Filter.IN_USE ) )
         {
-            for ( RecordField field : fields )
-            {
-                long otherId = field.relOf( rel );
-                if ( otherId == field.none )
-                {
-                    Long nodeId = field.nodeOf( rel );
-                    if ( nodeId != null )
-                    {
-                        NodeRecord node = nodeStore.forceGetRecord( nodeId );
-                        if ( !node.inUse() || node.getNextRel() != rel.getId() )
-                        {
-                            result.add( new RecordInconsistency( rel, node ) );
-                        }
-                    }
-                }
-                else
-                {
-                    RelationshipRecord other = relStore.forceGetRecord( otherId );
-                    if ( !other.inUse() || !field.invConsistent( rel, other ) )
-                    {
-                        result.add( new RecordInconsistency( rel, other ) );
-                    }
-                }
-            }
-            if ( propStore != null )
-            {
-                long propId = rel.getNextProp();
-                if ( propId != PropertyStoreAccess.NO_NEXT_RECORD )
-                {
-                    PropertyRecord prop = propStore.forceGetRecord( propId );
-                    if ( !prop.inUse() ) result.add( new RecordInconsistency( rel, prop ) );
-                }
-            }
+            checkRel( relStore, nodeStore, propStore, result, rel );
         }
     }
 
-    @SuppressWarnings( "incomplete-switch" )
     private static void checkPropStore( PropertyStoreAccess propStore, StringPropertyStoreAccess stringStore,
-            ArrayPropertyStoreAccess arrayStore, List<RecordInconsistency> result )
+            ArrayPropertyStoreAccess arrayStore, Collection<RecordInconsistency> result )
     {
         if ( propStore == null ) return;
         for ( PropertyRecord prop : propStore.scan( Filter.IN_USE ) )
         {
-            long nextId = prop.getNextProp();
-            if ( nextId != PropertyStoreAccess.NO_NEXT_RECORD )
-            {
-                PropertyRecord next = propStore.forceGetRecord( nextId );
-                if ( !next.inUse() || next.getPrevProp() != prop.getId() )
-                {
-                    result.add( new RecordInconsistency( prop, next ) );
-                }
-            }
-            long prevId = prop.getPrevProp();
-            if ( prevId != PropertyStoreAccess.NO_PREV_RECORD )
-            {
-                PropertyRecord prev = propStore.forceGetRecord( prevId );
-                if ( !prev.inUse() || prev.getNextProp() != prop.getId() )
-                {
-                    result.add( new RecordInconsistency( prop, prev ) );
-                }
-            }
-            DynamicStoreAccess<?> store = null;
-            if ( prop.getType() == null )
-            {
-                result.add( new RecordInconsistency( prop, null ) );
-            }
-            else
-            {
-                switch ( prop.getType() )
-                {
-                case ILLEGAL:
-                    result.add( new RecordInconsistency( prop, null ) );
-                    break;
-                case STRING:
-                    store = stringStore;
-                    break;
-                case ARRAY:
-                    store = arrayStore;
-                    break;
-                }
-            }
-            if ( store != null )
-            {
-                DynamicRecord block = store.forceGetRecord( prop.getPropBlock() );
-                if ( !block.inUse() )
-                {
-                    result.add( new RecordInconsistency( prop, block ) );
-                }
-            }
+            checkProp( propStore, stringStore, arrayStore, result, prop );
         }
         checkDynamicStore( stringStore, result );
         checkDynamicStore( arrayStore, result );
     }
 
-    private static void checkDynamicStore( DynamicStoreAccess<?> store, List<RecordInconsistency> result )
+    private static void checkDynamicStore( DynamicStoreAccess<?> store, Collection<RecordInconsistency> result )
     {
         for ( DynamicRecord record : store.scan( Filter.IN_USE ) )
         {
-            long nextId = record.getNextBlock();
-            if ( nextId != DynamicStoreAccess.NO_NEXT_RECORD )
+            checkDynamic( store, result, record );
+        }
+    }
+
+    public static void check( StoreToolRunner runner, final Collection<RecordInconsistency> result )
+    {
+        final NodeStoreAccess nodeStore = runner.store().getNodeStore();
+        final RelationshipStoreAccess relStore = runner.store().getRelStore();
+        final PropertyStoreAccess propStore = runner.store().getPropStore();
+        final StringPropertyStoreAccess stringStore = runner.store().getStringPropertyStore();
+        final ArrayPropertyStoreAccess arrayStore = runner.store().getArrayPropertyStore();
+        runner.process( new RecordProcessor<NodeRecord>()
+        {
+            @Override
+            public void process( NodeRecord record )
             {
-                DynamicRecord next = store.forceGetRecord( nextId );
-                if ( !next.inUse() || next.getPrevBlock() != record.getId() )
+                checkNode( relStore, propStore, result, record );
+            }
+        }, nodeStore, Filter.IN_USE );
+        runner.process( new RecordProcessor<RelationshipRecord>()
+        {
+            @Override
+            public void process( RelationshipRecord record )
+            {
+                checkRel( relStore, nodeStore, propStore, result, record );
+            }
+        }, relStore, Filter.IN_USE );
+        if ( propStore != null )
+        {
+            runner.process( new RecordProcessor<PropertyRecord>()
+            {
+                @Override
+                public void process( PropertyRecord record )
                 {
-                    result.add( new RecordInconsistency( record, next ) );
+                    checkProp( propStore, stringStore, arrayStore, result, record );
+                }
+            }, propStore, Filter.IN_USE );
+            processDynamic( runner, stringStore, result );
+        }
+    }
+
+    private static void processDynamic( StoreToolRunner runner, final DynamicStoreAccess<?> dynamicStore,
+            final Collection<RecordInconsistency> result )
+    {
+        runner.process( new RecordProcessor<DynamicRecord>()
+        {
+            @Override
+            public void process( DynamicRecord record )
+            {
+                checkDynamic( dynamicStore, result, record );
+            }
+        }, dynamicStore, Filter.IN_USE );
+    }
+
+    private static void checkNode( RelationshipStoreAccess relStore, PropertyStoreAccess propStore,
+            Collection<RecordInconsistency> result, NodeRecord node )
+    {
+        long relId = node.getNextRel();
+        if ( relId != RelationshipStoreAccess.NO_NEXT_RECORD )
+        {
+            RelationshipRecord rel = relStore.forceGetRecord( relId );
+            if ( !rel.inUse() || !( rel.getFirstNode() == node.getId() || rel.getSecondNode() == node.getId() ) )
+            {
+                result.add( new RecordInconsistency( node, rel ) );
+            }
+        }
+        if ( propStore != null )
+        {
+            long propId = node.getNextProp();
+            if ( propId != PropertyStoreAccess.NO_NEXT_RECORD )
+            {
+                PropertyRecord prop = propStore.forceGetRecord( propId );
+                if ( !prop.inUse() ) result.add( new RecordInconsistency( node, prop ) );
+            }
+        }
+    }
+
+    private static RecordField[] fields = RecordField.values();
+
+    @SuppressWarnings( "boxing" )
+    private static void checkRel( RelationshipStoreAccess relStore, NodeStoreAccess nodeStore,
+            PropertyStoreAccess propStore, Collection<RecordInconsistency> result, RelationshipRecord rel )
+    {
+        for ( RecordField field : fields )
+        {
+            long otherId = field.relOf( rel );
+            if ( otherId == field.none )
+            {
+                Long nodeId = field.nodeOf( rel );
+                if ( nodeId != null )
+                {
+                    NodeRecord node = nodeStore.forceGetRecord( nodeId );
+                    if ( !node.inUse() || node.getNextRel() != rel.getId() )
+                    {
+                        result.add( new RecordInconsistency( rel, node ) );
+                    }
                 }
             }
-            long prevId = record.getPrevBlock();
-            if ( prevId != DynamicStoreAccess.NO_PREV_RECORD )
+            else
             {
-                DynamicRecord prev = store.forceGetRecord( prevId );
-                if ( !prev.inUse() || prev.getNextBlock() != record.getId() )
+                RelationshipRecord other = relStore.forceGetRecord( otherId );
+                if ( !other.inUse() || !field.invConsistent( rel, other ) )
                 {
-                    result.add( new RecordInconsistency( record, prev ) );
+                    result.add( new RecordInconsistency( rel, other ) );
                 }
+            }
+        }
+        if ( propStore != null )
+        {
+            long propId = rel.getNextProp();
+            if ( propId != PropertyStoreAccess.NO_NEXT_RECORD )
+            {
+                PropertyRecord prop = propStore.forceGetRecord( propId );
+                if ( !prop.inUse() ) result.add( new RecordInconsistency( rel, prop ) );
+            }
+        }
+    }
+
+    @SuppressWarnings( "incomplete-switch" )
+    private static void checkProp( PropertyStoreAccess propStore, StringPropertyStoreAccess stringStore,
+            ArrayPropertyStoreAccess arrayStore, Collection<RecordInconsistency> result, PropertyRecord prop )
+    {
+        long nextId = prop.getNextProp();
+        if ( nextId != PropertyStoreAccess.NO_NEXT_RECORD )
+        {
+            PropertyRecord next = propStore.forceGetRecord( nextId );
+            if ( !next.inUse() || next.getPrevProp() != prop.getId() )
+            {
+                result.add( new RecordInconsistency( prop, next ) );
+            }
+        }
+        long prevId = prop.getPrevProp();
+        if ( prevId != PropertyStoreAccess.NO_PREV_RECORD )
+        {
+            PropertyRecord prev = propStore.forceGetRecord( prevId );
+            if ( !prev.inUse() || prev.getNextProp() != prop.getId() )
+            {
+                result.add( new RecordInconsistency( prop, prev ) );
+            }
+        }
+        DynamicStoreAccess<?> store = null;
+        if ( prop.getType() == null )
+        {
+            result.add( new RecordInconsistency( prop, null ) );
+        }
+        else
+        {
+            switch ( prop.getType() )
+            {
+            case ILLEGAL:
+                result.add( new RecordInconsistency( prop, null ) );
+                break;
+            case STRING:
+                store = stringStore;
+                break;
+            case ARRAY:
+                store = arrayStore;
+                break;
+            }
+        }
+        if ( store != null )
+        {
+            DynamicRecord block = store.forceGetRecord( prop.getPropBlock() );
+            if ( !block.inUse() )
+            {
+                result.add( new RecordInconsistency( prop, block ) );
+            }
+        }
+    }
+
+    private static void checkDynamic( DynamicStoreAccess<?> store, Collection<RecordInconsistency> result,
+            DynamicRecord record )
+    {
+        long nextId = record.getNextBlock();
+        if ( nextId != DynamicStoreAccess.NO_NEXT_RECORD )
+        {
+            DynamicRecord next = store.forceGetRecord( nextId );
+            if ( !next.inUse() || next.getPrevBlock() != record.getId() )
+            {
+                result.add( new RecordInconsistency( record, next ) );
+            }
+        }
+        long prevId = record.getPrevBlock();
+        if ( prevId != DynamicStoreAccess.NO_PREV_RECORD )
+        {
+            DynamicRecord prev = store.forceGetRecord( prevId );
+            if ( !prev.inUse() || prev.getNextBlock() != record.getId() )
+            {
+                result.add( new RecordInconsistency( record, prev ) );
             }
         }
     }

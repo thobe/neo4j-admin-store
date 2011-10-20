@@ -19,6 +19,10 @@
  */
 package org.neo4j.admin.tool.consistency;
 
+import java.util.AbstractCollection;
+import java.util.Collections;
+import java.util.Iterator;
+
 import org.neo4j.admin.check.RecordInconsistency;
 import org.neo4j.admin.tool.SimpleStoreTool;
 
@@ -37,9 +41,26 @@ public class Main extends SimpleStoreTool
     @Override
     protected void run() throws Throwable
     {
-        for ( RecordInconsistency inconsistency : RecordInconsistency.check( store ) )
+        RecordInconsistency.check( this, new AbstractCollection<RecordInconsistency>()
         {
-            System.out.println( inconsistency );
-        }
+            @Override
+            public boolean add( RecordInconsistency e )
+            {
+                System.out.println( e );
+                return false;
+            }
+
+            @Override
+            public Iterator<RecordInconsistency> iterator()
+            {
+                return Collections.<RecordInconsistency>emptyList().iterator();
+            }
+
+            @Override
+            public int size()
+            {
+                return 0;
+            }
+        } );
     }
 }

@@ -27,6 +27,7 @@ import org.neo4j.admin.tool.RecordProcessor;
 import org.neo4j.admin.tool.StoreToolRunner;
 import org.neo4j.kernel.impl.nioneo.store.Abstract64BitRecord;
 import org.neo4j.kernel.impl.nioneo.store.ArrayPropertyStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.CommonAbstractStore;
 import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
 import org.neo4j.kernel.impl.nioneo.store.DynamicStoreAccess;
 import org.neo4j.kernel.impl.nioneo.store.Filter;
@@ -37,56 +38,35 @@ import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
 import org.neo4j.kernel.impl.nioneo.store.PropertyStoreAccess;
 import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
 import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.StoreAccess;
 import org.neo4j.kernel.impl.nioneo.store.StringPropertyStoreAccess;
 
 @SuppressWarnings( "unchecked" )
 public class RecordInconsistency
 {
-    public static List<RecordInconsistency> check( GraphDatabaseStore store )
+    public static List<RecordInconsistency> check( final GraphDatabaseStore store )
     {
         List<RecordInconsistency> result = new ArrayList<RecordInconsistency>();
-        checkNodeStore( store.getNodeStore(), store.getRelStore(), store.getPropStore(), result );
-        checkRelStore( store.getRelStore(), store.getNodeStore(), store.getPropStore(), result );
-        checkPropStore( store.getPropStore(), store.getStringPropertyStore(), store.getArrayPropertyStore(), result );
+        check( new StoreToolRunner()
+        {
+            @Override
+            public GraphDatabaseStore store()
+            {
+                return store;
+            }
+
+            @Override
+            public <T extends CommonAbstractStore, R extends Abstract64BitRecord> void process(
+                    RecordProcessor<R> processor, @SuppressWarnings( "hiding" ) StoreAccess<T, R> store,
+                    Filter<? super R>... filters )
+            {
+                for ( R record : store.scan( filters ) )
+                {
+                    processor.process( record );
+                }
+            }
+        }, result );
         return result;
-    }
-
-    private static void checkNodeStore( NodeStoreAccess nodeStore, RelationshipStoreAccess relStore,
-            PropertyStoreAccess propStore, Collection<RecordInconsistency> result )
-    {
-        for ( NodeRecord node : nodeStore.scan( Filter.IN_USE ) )
-        {
-            checkNode( relStore, propStore, result, node );
-        }
-    }
-
-    private static void checkRelStore( RelationshipStoreAccess relStore, NodeStoreAccess nodeStore,
-            PropertyStoreAccess propStore, Collection<RecordInconsistency> result )
-    {
-        for ( RelationshipRecord rel : relStore.scan( Filter.IN_USE ) )
-        {
-            checkRel( relStore, nodeStore, propStore, result, rel );
-        }
-    }
-
-    private static void checkPropStore( PropertyStoreAccess propStore, StringPropertyStoreAccess stringStore,
-            ArrayPropertyStoreAccess arrayStore, Collection<RecordInconsistency> result )
-    {
-        if ( propStore == null ) return;
-        for ( PropertyRecord prop : propStore.scan( Filter.IN_USE ) )
-        {
-            checkProp( propStore, stringStore, arrayStore, result, prop );
-        }
-        checkDynamicStore( stringStore, result );
-        checkDynamicStore( arrayStore, result );
-    }
-
-    private static void checkDynamicStore( DynamicStoreAccess<?> store, Collection<RecordInconsistency> result )
-    {
-        for ( DynamicRecord record : store.scan( Filter.IN_USE ) )
-        {
-            checkDynamic( store, result, record );
-        }
     }
 
     public static void check( StoreToolRunner runner, final Collection<RecordInconsistency> result )

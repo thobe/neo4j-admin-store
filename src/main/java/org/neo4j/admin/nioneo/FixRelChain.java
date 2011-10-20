@@ -68,6 +68,10 @@ public class FixRelChain extends NioneoApp
                 }
                 nextRelId = record.getSecondNextRel();
             }
+            else
+            {
+                nextRelId = Record.NO_NEXT_RELATIONSHIP.intValue();
+            }
         }
         return null;
     }

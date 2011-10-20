@@ -68,7 +68,7 @@ public class FixRelChain extends NioneoApp
                     return null;
                 }
             }
-            else if ( record.getSecondNode() == nodeId )
+            if ( record.getSecondNode() == nodeId )
             {
                 NodeRecord otherNode = nodeStore.forceGetRecord( record.getFirstNode() );
                 if ( !otherNode.inUse() )

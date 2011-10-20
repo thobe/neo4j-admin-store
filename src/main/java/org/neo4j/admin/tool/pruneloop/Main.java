@@ -74,7 +74,7 @@ public class Main extends SimpleStoreTool implements RecordProcessor<NodeRecord>
     {
         Set<Long> seen = new HashSet<Long>();
         RelationshipRecord rel = null;
-        for ( long curId = node.getNextRel(), prevId = RelationshipStoreAccess.NO_NEXT_RECORD, nextId; curId != RelationshipStoreAccess.NO_NEXT_RECORD; prevId = curId, curId = nextId )
+        for ( long curId = node.getNextRel(), prevId = RelationshipStoreAccess.NO_NEXT_RECORD, nextId = prevId; curId != RelationshipStoreAccess.NO_NEXT_RECORD; prevId = curId, curId = nextId )
         {
             RelationshipRecord prev = rel;
             rel = rels.forceGetRecord( curId );
@@ -163,8 +163,6 @@ public class Main extends SimpleStoreTool implements RecordProcessor<NodeRecord>
                     return; // chain broken
                 }
             }
-            else
-                return; // should never happen
         }
     }
 }

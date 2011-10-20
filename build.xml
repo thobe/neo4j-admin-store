@@ -34,7 +34,8 @@
     <package tool="consistency"/>
     <package tool="dumplog"/>
     <package tool="tmdumplog"/>
-    <package tool="prunerr"/>
+    <package tool="pruneproperr"/>
+    <package tool="prunenoderr"/>
   </target>
 
   <macrodef name="package">

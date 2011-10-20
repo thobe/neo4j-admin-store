@@ -47,6 +47,8 @@ public class Main
         server.addApp( Set.class );
         server.addApp( Store.class );
         server.addApp( Toggle.class );
+        server.addApp( FixAllRels.class );
+        server.addApp( FixAllProps.class );
         ShellLobby.newClient( server ).grabPrompt();
         server.shutdown();
     }

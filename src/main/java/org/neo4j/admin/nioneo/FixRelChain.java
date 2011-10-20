@@ -54,6 +54,7 @@ public class FixRelChain extends NioneoApp
                 if ( !otherNode.inUse() )
                 {
                     relDelete( server, record );
+                    System.out.println( record );
                 }
                 nextRelId = record.getFirstNextRel();
             }
@@ -63,6 +64,7 @@ public class FixRelChain extends NioneoApp
                 if ( !otherNode.inUse() )
                 {
                     relDelete( server, record );
+                    System.out.println( record );
                 }
                 nextRelId = record.getSecondNextRel();
             }

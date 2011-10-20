@@ -19,6 +19,8 @@
  */
 package org.neo4j.admin.nioneo;
 
+import java.util.HashSet;
+
 import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
 import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;
 import org.neo4j.kernel.impl.nioneo.store.Record;
@@ -45,6 +47,8 @@ public class FixRelChain extends NioneoApp
         NodeRecord nodeRecord = nodeStore.getRecord( nodeId );
         RelationshipStoreAccess relStore = server.getRelStore();
         long nextRelId = nodeRecord.getNextRel();
+        HashSet<Long> visitedRels = new HashSet<Long>();
+        RelationshipRecord prevRecord = null;
         while ( nextRelId != Record.NO_PREV_RELATIONSHIP.intValue() )
         {
             RelationshipRecord record = relStore.getRecord( nextRelId );
@@ -54,9 +58,15 @@ public class FixRelChain extends NioneoApp
                 if ( !otherNode.inUse() )
                 {
                     relDelete( server, record );
-                    System.out.println( record );
                 }
                 nextRelId = record.getFirstNextRel();
+                if ( visitedRels.contains( nextRelId ) )
+                {
+                    record.setFirstNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
+                    relStore.forceUpdateRecord( record );
+                    System.out.println( record );
+                    return null;
+                }
             }
             else if ( record.getSecondNode() == nodeId )
             {
@@ -64,20 +74,48 @@ public class FixRelChain extends NioneoApp
                 if ( !otherNode.inUse() )
                 {
                     relDelete( server, record );
-                    System.out.println( record );
                 }
                 nextRelId = record.getSecondNextRel();
+                if ( visitedRels.contains( nextRelId ) )
+                {
+                    record.setSecondNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
+                    relStore.forceUpdateRecord( record );
+                    System.out.println( record );
+                    return null;
+                }
             }
             else
             {
-                nextRelId = Record.NO_NEXT_RELATIONSHIP.intValue();
+                if ( prevRecord != null )
+                {
+                    if ( prevRecord.getFirstNode() == nodeId )
+                    {
+                        prevRecord.setFirstNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
+                        relStore.forceUpdateRecord( prevRecord );
+                    }
+                    else if ( prevRecord.getSecondNode() == nodeId )
+                    {
+                        prevRecord.setSecondNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
+                        relStore.forceUpdateRecord( prevRecord );
+                    }
+                    else
+                    {
+                        throw new RuntimeException( "Can not happen" );
+                    }
+                    System.out.println( prevRecord );
+                }
+                // nextRelId = Record.NO_NEXT_RELATIONSHIP.intValue();
+                return null;
             }
+            visitedRels.add( record.getId() );
+            prevRecord = record;
         }
         return null;
     }
 
     static void relDelete( NioneoServer server, RelationshipRecord rel )
     {
+        System.out.println( rel );
         RelationshipStoreAccess relStore = server.getRelStore();
         if ( rel.getFirstPrevRel() != Record.NO_NEXT_RELATIONSHIP.intValue() )
         {

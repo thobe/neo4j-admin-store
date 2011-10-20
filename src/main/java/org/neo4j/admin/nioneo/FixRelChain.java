@@ -51,40 +51,46 @@ public class FixRelChain extends NioneoApp
         RelationshipRecord prevRecord = null;
         while ( nextRelId != Record.NO_PREV_RELATIONSHIP.intValue() )
         {
-            RelationshipRecord record = relStore.getRecord( nextRelId );
-            if ( record.getFirstNode() == nodeId )
+            RelationshipRecord record = relStore.forceGetRecord( nextRelId );
+            boolean linked = false;
+            if ( record.inUse() )
             {
-                NodeRecord otherNode = nodeStore.forceGetRecord( record.getSecondNode() );
-                if ( !otherNode.inUse() )
+                if ( record.getFirstNode() == nodeId )
                 {
-                    relDelete( server, record );
+                    linked = true;
+                    NodeRecord otherNode = nodeStore.forceGetRecord( record.getSecondNode() );
+                    if ( !otherNode.inUse() )
+                    {
+                        relDelete( server, record );
+                    }
+                    nextRelId = record.getFirstNextRel();
+                    if ( visitedRels.contains( nextRelId ) )
+                    {
+                        record.setFirstNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
+                        relStore.forceUpdateRecord( record );
+                        System.out.println( record );
+                        return null;
+                    }
                 }
-                nextRelId = record.getFirstNextRel();
-                if ( visitedRels.contains( nextRelId ) )
+                if ( record.getSecondNode() == nodeId )
                 {
-                    record.setFirstNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
-                    relStore.forceUpdateRecord( record );
-                    System.out.println( record );
-                    return null;
+                    linked = true;
+                    NodeRecord otherNode = nodeStore.forceGetRecord( record.getFirstNode() );
+                    if ( !otherNode.inUse() )
+                    {
+                        relDelete( server, record );
+                    }
+                    nextRelId = record.getSecondNextRel();
+                    if ( visitedRels.contains( nextRelId ) )
+                    {
+                        record.setSecondNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
+                        relStore.forceUpdateRecord( record );
+                        System.out.println( record );
+                        return null;
+                    }
                 }
             }
-            if ( record.getSecondNode() == nodeId )
-            {
-                NodeRecord otherNode = nodeStore.forceGetRecord( record.getFirstNode() );
-                if ( !otherNode.inUse() )
-                {
-                    relDelete( server, record );
-                }
-                nextRelId = record.getSecondNextRel();
-                if ( visitedRels.contains( nextRelId ) )
-                {
-                    record.setSecondNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
-                    relStore.forceUpdateRecord( record );
-                    System.out.println( record );
-                    return null;
-                }
-            }
-            else
+            if ( !record.inUse() || !linked )
             {
                 if ( prevRecord != null )
                 {
@@ -93,14 +99,10 @@ public class FixRelChain extends NioneoApp
                         prevRecord.setFirstNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
                         relStore.forceUpdateRecord( prevRecord );
                     }
-                    else if ( prevRecord.getSecondNode() == nodeId )
+                    if ( prevRecord.getSecondNode() == nodeId )
                     {
                         prevRecord.setSecondNextRel( Record.NO_NEXT_RELATIONSHIP.intValue() );
                         relStore.forceUpdateRecord( prevRecord );
-                    }
-                    else
-                    {
-                        throw new RuntimeException( "Can not happen" );
                     }
                     System.out.println( prevRecord );
                 }

@@ -66,72 +66,83 @@ public class Main extends SimpleStoreTool
         {
             RelationshipRecord prev = rel;
             rel = rels.forceGetRecord( curId );
-            if ( rel.getFirstNode() == nodeId )
+            boolean linked = false;
+            if ( !rel.inUse() )
             {
-                nextId = rel.getFirstNextRel();
-                boolean fixed = false;
-                try
+                if ( rel.getFirstNode() == nodeId )
                 {
-                    if ( rel.getFirstPrevRel() != prevId )
+                    nextId = rel.getFirstNextRel();
+                    boolean fixed = false;
+                    try
                     {
-                        rel.setFirstPrevRel( prevId );
-                        fixed = true;
+                        if ( rel.getFirstPrevRel() != prevId )
+                        {
+                            rel.setFirstPrevRel( prevId );
+                            fixed = true;
+                        }
+                        if ( !seen.add( Long.valueOf( nextId ) ) )
+                        {
+                            rel.setFirstNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
+                            fixed = true;
+                            return;
+                        }
                     }
-                    if ( !seen.add( Long.valueOf( nextId ) ) )
+                    finally
                     {
-                        rel.setFirstNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
-                        fixed = true;
-                        return;
+                        if ( fixed ) rels.forceUpdateRecord( rel );
+                        linked = true;
                     }
                 }
-                finally
+                if ( rel.getSecondNode() == nodeId )
                 {
-                    if ( fixed ) rels.forceUpdateRecord( rel );
+                    nextId = rel.getSecondNextRel();
+                    boolean fixed = false;
+                    try
+                    {
+                        if ( rel.getSecondPrevRel() != prevId )
+                        {
+                            rel.setSecondPrevRel( prevId );
+                            fixed = true;
+                        }
+                        if ( !seen.add( Long.valueOf( nextId ) ) )
+                        {
+                            rel.setSecondNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
+                            fixed = true;
+                            return;
+                        }
+                    }
+                    finally
+                    {
+                        if ( fixed ) rels.forceUpdateRecord( rel );
+                        linked = true;
+                    }
                 }
             }
-            else if ( rel.getSecondNode() == nodeId )
+            if ( !linked )
             {
-                nextId = rel.getSecondNextRel();
-                boolean fixed = false;
-                try
-                {
-                    if ( rel.getSecondPrevRel() != prevId )
+                // the relationship did not reference the node - break the chain
+                if ( prev != null )
+                { // in the middle of the chain
+                    if ( prev.getFirstNode() == nodeId )
                     {
-                        rel.setSecondPrevRel( prevId );
-                        fixed = true;
+                        prev.setFirstNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
                     }
-                    if ( !seen.add( Long.valueOf( nextId ) ) )
+                    if ( prev.getSecondNode() == nodeId )
                     {
-                        rel.setSecondNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
-                        fixed = true;
-                        return;
+                        prev.setSecondNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
                     }
-                }
-                finally
-                {
-                    if ( fixed ) rels.forceUpdateRecord( rel );
-                }
-            }
-            // the relationship did not reference the node - break the chain
-            else if ( prev != null )
-            { // in the middle of the chain
-                if ( prev.getFirstNode() == nodeId )
-                {
-                    prev.setFirstNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
+                    rels.forceUpdateRecord( prev );
+                    return; // chain broken
                 }
                 else
-                {
-                    prev.setSecondNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
+                { // in the start of the chain
+                    node.setNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
+                    nodes.forceUpdateRecord( node );
+                    return; // chain broken
                 }
-                rels.forceUpdateRecord( prev );
-                return; // chain broken
             }
             else
-            { // in the start of the chain
-                node.setNextRel( RelationshipStoreAccess.NO_NEXT_RECORD );
-                nodes.forceUpdateRecord( node );
-                return; // chain broken
-            }
+                return; // should never happen
         }
     }
 }

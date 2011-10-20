@@ -43,7 +43,10 @@ public class FixAllProps extends NioneoApp
             NodeRecord record = nodeStore.forceGetRecord( i );
             if ( record.inUse() && record.getNextProp() != Record.NO_NEXT_PROPERTY.intValue() )
             {
-                FixPropChain.checkChain( getServer(), out, record.getNextProp() );
+                if ( FixPropChain.checkChain( getServer(), out, record.getNextProp() ) )
+                {
+                    System.out.println( record );
+                }
             }
         }
         RelationshipStoreAccess relStore = getServer().getRelStore();
@@ -53,7 +56,10 @@ public class FixAllProps extends NioneoApp
             RelationshipRecord record = relStore.forceGetRecord( i );
             if ( record.inUse() && record.getNextProp() != Record.NO_NEXT_PROPERTY.intValue() )
             {
-                FixPropChain.checkChain( getServer(), out, record.getNextProp() );
+                if ( FixPropChain.checkChain( getServer(), out, record.getNextProp() ) )
+                {
+                    System.out.println( record );
+                }
             }
         }
         return null;

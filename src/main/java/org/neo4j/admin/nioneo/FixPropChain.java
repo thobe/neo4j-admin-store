@@ -43,13 +43,15 @@ public class FixPropChain extends NioneoApp
         NodeStoreAccess nodeStore = getServer().getNodeStore();
         NodeRecord nodeRecord = nodeStore.forceGetRecord( id );
         long nextProp = nodeRecord.getNextProp();
-        return checkChain( getServer(), out, nextProp );
+        checkChain( getServer(), out, nextProp );
+        return null;
     }
 
-    static String checkChain( NioneoServer server, Output out, long nextProp ) throws ShellException
+    static boolean checkChain( NioneoServer server, Output out, long nextProp ) throws ShellException
     {
         long prevProp = Record.NO_PREVIOUS_PROPERTY.intValue();
         PropertyStoreAccess propStore = server.getPropStore();
+        boolean changed = false;
         while ( nextProp != Record.NO_NEXT_PROPERTY.intValue() )
         {
             PropertyRecord propRecord = propStore.forceGetRecord( nextProp );
@@ -62,6 +64,7 @@ public class FixPropChain extends NioneoApp
                     prev.setNextProp( Record.NO_NEXT_PROPERTY.intValue() );
                     propStore.forceUpdateRecord( prev );
                 }
+                changed = true;
             }
             else
             {
@@ -78,6 +81,7 @@ public class FixPropChain extends NioneoApp
                             prev.setNextProp( Record.NO_NEXT_PROPERTY.intValue() );
                             propStore.forceUpdateRecord( prev );
                         }
+                        changed = true;
                         continue;
                     }
                     if ( dr.getPrevBlock() != Record.NO_PREV_BLOCK.intValue() )
@@ -90,6 +94,7 @@ public class FixPropChain extends NioneoApp
                             prev.setNextProp( Record.NO_NEXT_PROPERTY.intValue() );
                             propStore.forceUpdateRecord( prev );
                         }
+                        changed = true;
                         continue;
                     }
                 }
@@ -106,6 +111,7 @@ public class FixPropChain extends NioneoApp
                             prev.setNextProp( Record.NO_NEXT_PROPERTY.intValue() );
                             propStore.forceUpdateRecord( prev );
                         }
+                        changed = true;
                         continue;
                     }
                     if ( dr.getPrevBlock() != Record.NO_PREV_BLOCK.intValue() )
@@ -118,6 +124,7 @@ public class FixPropChain extends NioneoApp
                             prev.setNextProp( Record.NO_NEXT_PROPERTY.intValue() );
                             propStore.forceUpdateRecord( prev );
                         }
+                        changed = true;
                         continue;
                     }
                 }
@@ -125,19 +132,20 @@ public class FixPropChain extends NioneoApp
                 {
                     propRecord.setPrevProp( prevProp );
                     propStore.forceUpdateRecord( propRecord );
+                    changed = true;
                 }
                 prevProp = propRecord.getId();
                 nextProp = propRecord.getNextProp();
             }
         }
-        try
-        {
-            out.println( "Done" );
-        }
-        catch ( RemoteException e )
-        {
-            throw ShellException.wrapCause( e );
-        }
-        return null;
+//        try
+//        {
+//            out.println( "Done" );
+//        }
+//        catch ( RemoteException e )
+//        {
+//            throw ShellException.wrapCause( e );
+//        }
+        return changed;
     }
 }

@@ -22,8 +22,6 @@ package org.neo4j.admin.nioneo;
 import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
 import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;
 import org.neo4j.kernel.impl.nioneo.store.Record;
-import org.neo4j.kernel.impl.nioneo.store.RelationshipRecord;
-import org.neo4j.kernel.impl.nioneo.store.RelationshipStoreAccess;
 import org.neo4j.shell.AppCommandParser;
 import org.neo4j.shell.Output;
 import org.neo4j.shell.Session;
@@ -34,8 +32,6 @@ public class FixAllRels extends NioneoApp
 
     public String execute( AppCommandParser parser, Session session, Output out ) throws ShellException
     {
-        String arg = parser.arguments().get( 0 );
-        int id = Integer.parseInt( arg );
         NodeStoreAccess nodeStore = getServer().getNodeStore();
         int maxNodeId = (int) nodeStore.getHighId();
         for ( int i = 0; i < maxNodeId; i++ )

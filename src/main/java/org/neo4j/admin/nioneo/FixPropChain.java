@@ -19,8 +19,6 @@
  */
 package org.neo4j.admin.nioneo;
 
-import java.rmi.RemoteException;
-
 import org.neo4j.kernel.impl.nioneo.store.DynamicRecord;
 import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
 import org.neo4j.kernel.impl.nioneo.store.NodeStoreAccess;

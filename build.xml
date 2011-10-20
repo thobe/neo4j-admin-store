@@ -36,6 +36,7 @@
     <package tool="tmdumplog"/>
     <package tool="pruneproperr"/>
     <package tool="prunenoderr"/>
+    <package tool="pruneloop"/>
   </target>
 
   <macrodef name="package">
@@ -64,9 +65,10 @@
   <target name="build">
     <exec executable="mvn">
       <arg value="clean"/>
-      <arg value="compile"/>
+      <arg value="package"/>
       <arg value="dependency:copy-dependencies"/>
       <arg value="-Dneo4j-version=${neo4j-version}"/>
+      <arg value="-DskipTests"/>
     </exec>
   </target>
 </project>

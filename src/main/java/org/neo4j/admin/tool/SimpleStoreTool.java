@@ -106,7 +106,7 @@ public abstract class SimpleStoreTool
             RecordProcessor<R> processor, StoreAccess<T, R> store, Filter<? super R>... filters )
     {
         long highId = store.getHighId();
-        System.out.printf( "%s for %s records%n", processor, Long.toString( highId ) );
+        System.err.printf( "%s for %s records%n", processor, Long.toString( highId ) );
         int lastPercent = 0;
         for ( R record : store.scan( filters ) )
         {
@@ -120,8 +120,8 @@ public abstract class SimpleStoreTool
     private static void progress( int permille )
     {
         if ( permille % 100 == 0 )
-            System.out.printf( "%3s%%%n", Integer.toString( permille / 10 ) );
-        else if ( permille % 5 == 0 ) System.out.print( "." );
+            System.err.printf( "%3s%%%n", Integer.toString( permille / 10 ) );
+        else if ( permille % 5 == 0 ) System.err.print( "." );
     }
 
     private static String jar( Class<?> type )

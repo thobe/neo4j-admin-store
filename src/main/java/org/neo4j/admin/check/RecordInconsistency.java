@@ -103,6 +103,7 @@ public class RecordInconsistency
                 }
             }, propStore, Filter.IN_USE );
             processDynamic( runner, stringStore, result );
+            processDynamic( runner, arrayStore, result );
         }
     }
 

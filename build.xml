@@ -37,6 +37,7 @@
     <package tool="pruneproperr"/>
     <package tool="prunenoderr"/>
     <package tool="pruneloop"/>
+    <package tool="mkcopy"/>
   </target>
 
   <macrodef name="package">

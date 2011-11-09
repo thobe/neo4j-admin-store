@@ -55,6 +55,7 @@ public abstract class SimpleStoreTool implements StoreToolRunner
             return;
         }
         init.setAccessible( true );
+        if ( args == null ) args = new String[0];
         final SST instance;
         try
         {

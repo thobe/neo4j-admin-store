@@ -28,6 +28,7 @@ import org.neo4j.helpers.Triplet;
 import org.neo4j.kernel.CommonFactories;
 import org.neo4j.kernel.Config;
 import org.neo4j.kernel.IdGeneratorFactory;
+import org.neo4j.kernel.IdType;
 import org.neo4j.kernel.impl.nioneo.xa.LogicalLogStore;
 
 public class GraphDatabaseStore extends LogicalLogStore
@@ -48,6 +49,7 @@ public class GraphDatabaseStore extends LogicalLogStore
     }
     private final NodeStore nodeStore;
     private final RelationshipStore relStore;
+    private final RelationshipTypeStore relTypeStore;
     private final PropertyStore propStore;
     private final DynamicStringStore stringStore;
     private final DynamicArrayStore arrayStore;
@@ -95,6 +97,8 @@ public class GraphDatabaseStore extends LogicalLogStore
         params.put( FileSystemAbstraction.class, CommonFactories.defaultFileSystemAbstraction() );
         this.nodeStore = new NodeStore( path + "/neostore.nodestore.db", params );
         this.relStore = new RelationshipStore( path + "/neostore.relationshipstore.db", params );
+        this.relTypeStore = new RelationshipTypeStore( path + "/neostore.relationshiptypestore.db", params,
+                IdType.RELATIONSHIP_TYPE );
         if ( new File( path + "/neostore.propertystore.db" ).exists() )
         {
             this.propStore = new PropertyStore( path + "/neostore.propertystore.db", params );
@@ -199,5 +203,15 @@ public class GraphDatabaseStore extends LogicalLogStore
         DynamicArrayStore arrays = (DynamicArrayStore) get( propStore, ARRAY_PROPERTY_STORE );
         return Triplet.of( new PropertyStoreAccess( props ), new StringPropertyStoreAccess( strings ),
                 new ArrayPropertyStoreAccess( arrays ) );
+    }
+
+    public RelationshipTypeStoreAccess getTypeStore()
+    {
+        return new RelationshipTypeStoreAccess( relTypeStore );
+    }
+
+    public IndexKeyStoreAccess getIndexKeyStore()
+    {
+        return propStore == null ? null : new IndexKeyStoreAccess( propStore.getIndexStore() );
     }
 }

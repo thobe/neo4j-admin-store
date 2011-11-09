@@ -34,6 +34,7 @@ import org.neo4j.kernel.impl.batchinsert.BatchInserter;
 import org.neo4j.kernel.impl.batchinsert.BatchInserterImpl;
 import org.neo4j.kernel.impl.nioneo.store.Filter;
 import org.neo4j.kernel.impl.nioneo.store.IndexKeyStoreAccess;
+import org.neo4j.kernel.impl.nioneo.store.InvalidRecordException;
 import org.neo4j.kernel.impl.nioneo.store.NodeRecord;
 import org.neo4j.kernel.impl.nioneo.store.PropertyRecord;
 import org.neo4j.kernel.impl.nioneo.store.PropertyStoreAccess;
@@ -85,8 +86,16 @@ public class Main extends SimpleStoreTool implements NodeProcessor, Relationship
     @Override
     public void processRelationship( RelationshipRecord record )
     {
-        target.createRelationship( record.getFirstNode(), record.getSecondNode(), type( record.getType() ),
-                properties( record.getNextProp() ) );
+        RelationshipType type = type( record.getType() );
+        Map<String, Object> properties = properties( record.getNextProp() );
+        try
+        {
+            target.createRelationship( record.getFirstNode(), record.getSecondNode(), type, properties );
+        }
+        catch ( InvalidRecordException e )
+        {
+            System.err.println( "Failed to recreate " + record + ": " + e );
+        }
     }
 
     private RelationshipType type( int type )

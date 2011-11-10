@@ -57,6 +57,13 @@ public class Main extends SimpleStoreTool implements NodeProcessor, Relationship
         this.props = store.getPropStore();
         this.propKeys = store.getIndexKeyStore();
     }
+    
+    @Override
+    protected void shutdown()
+    {
+        target.shutdown();
+        super.shutdown();
+    }
 
     public static void main( String[] args ) throws Throwable
     {
@@ -74,7 +81,7 @@ public class Main extends SimpleStoreTool implements NodeProcessor, Relationship
     public void processNode( NodeRecord record )
     {
         if ( record.getId() == 0 )
-        {
+        { // node 0 already exists, even with the batch inserter
             target.setNodeProperties( record.getId(), properties( record.getNextProp() ) );
         }
         else

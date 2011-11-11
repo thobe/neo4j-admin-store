@@ -19,16 +19,22 @@
  */
 package org.neo4j.kernel.impl.nioneo.store;
 
+import java.util.Collection;
+
 
 public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyRecord> implements
         ChainStore<PropertyRecord>
 {
     public static final long NO_NEXT_RECORD = GraphDatabaseStore.NO_NEXT_PROP,
             NO_PREV_RECORD = GraphDatabaseStore.NO_PREV_PROP;
+    private final DynamicStringStore strings;
+    private final DynamicArrayStore arrays;
 
-    PropertyStoreAccess( PropertyStore store )
+    PropertyStoreAccess( PropertyStore store, DynamicStringStore strings, DynamicArrayStore arrays )
     {
         super( store );
+        this.strings = strings;
+        this.arrays = arrays;
     }
     
     public String getStringForDynamicPropertyRecord( long id )
@@ -56,6 +62,32 @@ public class PropertyStoreAccess extends StoreAccess<PropertyStore, PropertyReco
         target.setPrevProp( source.getPrevProp() );
         target.setPropBlock( source.getPropBlock() );
         return target;
+    }
+
+    public PropertyRecord forceGetWithTransitiveDynamics( long id )
+    {
+        PropertyRecord record = forceGetRecord( id );
+        if ( record.getType() == PropertyType.STRING )
+        {
+            Collection<DynamicRecord> stringRecords = strings.getLightRecords( record.getPropBlock() );
+            record.setIsLight( false );
+            for ( DynamicRecord stringRecord : stringRecords )
+            {
+                stringRecord.setType( PropertyType.STRING.intValue() );
+                record.addValueRecord( stringRecord );
+            }
+        }
+        else if ( record.getType() == PropertyType.ARRAY )
+        {
+            Collection<DynamicRecord> arrayRecords = arrays.getLightRecords( record.getPropBlock() );
+            record.setIsLight( false );
+            for ( DynamicRecord arrayRecord : arrayRecords )
+            {
+                arrayRecord.setType( PropertyType.ARRAY.intValue() );
+                record.addValueRecord( arrayRecord );
+            }
+        }
+        return record;
     }
 
     @Override

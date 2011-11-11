@@ -173,7 +173,7 @@ public class GraphDatabaseStore extends LogicalLogStore
 
     public PropertyStoreAccess getPropStore()
     {
-        return propStore == null ? null : new PropertyStoreAccess( propStore );
+        return propStore == null ? null : new PropertyStoreAccess( propStore, stringStore, arrayStore );
     }
 
     public StringPropertyStoreAccess getStringPropertyStore()
@@ -201,7 +201,7 @@ public class GraphDatabaseStore extends LogicalLogStore
         PropertyStore props = new PropertyStore( fileName, params );
         DynamicStringStore strings = (DynamicStringStore) get( propStore, STRING_PROPERTY_STORE );
         DynamicArrayStore arrays = (DynamicArrayStore) get( propStore, ARRAY_PROPERTY_STORE );
-        return Triplet.of( new PropertyStoreAccess( props ), new StringPropertyStoreAccess( strings ),
+        return Triplet.of( new PropertyStoreAccess( props, strings, arrays ), new StringPropertyStoreAccess( strings ),
                 new ArrayPropertyStoreAccess( arrays ) );
     }
 

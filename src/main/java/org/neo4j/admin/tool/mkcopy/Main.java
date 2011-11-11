@@ -116,7 +116,7 @@ public class Main extends SimpleStoreTool implements NodeProcessor, Relationship
         Map<String, Object> result = new HashMap<String, Object>();
         while ( PropertyStoreAccess.NO_NEXT_RECORD != prop )
         {
-            PropertyRecord record = props.forceGetRecord( prop );
+            PropertyRecord record = props.forceGetWithTransitiveDynamics( prop );
             prop = record.getNextProp();
             PropertyType type = record.getType();
             if ( type == null ) continue;
